@@ -8,8 +8,6 @@ rule checksum_collection_of_files:
         "checksums/{file}.checksum"
     params:
         patterns=config.get("file_patterns", [])
-    wildcard_constraints:
-        file="^(?!.*\.vcf(\.gz)?$)(?!.*\.cram$)(?!.*\.(insert_size_metrics|WGSMetrics|alignment_summary_metrics|duplication_metrics)\.txt$)(?!.*samtools-stats\.txt$)(?!.*coverage_and_mutations.*$)(?!multiqc_.*\.html$).*"
     resources:
         mem_mb=get_resource("misc_validation", "mem_mb", 4000),
         runtime=get_resource("misc_validation", "runtime", 20),

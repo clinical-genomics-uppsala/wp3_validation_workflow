@@ -4,7 +4,8 @@ publish_dir: "validation_results"
 
 default_container: "docker://hydragenetics/common:3.1.1"
 
-reference_genome: "/beegfs-storage/data/ref_genomes/GRCh38/GRCmasked/GCA_000001405.15_GRCh38_no_alt_analysis_set_GRCmasked.fasta"
+
+reference_genome: ""
 
 # Rule-specific resource requirements
 resources:
@@ -38,12 +39,9 @@ resources:
     runtime: 240
     cpus_per_task: 1
 
-# # SLURM cluster configuration (when using --profile slurm)
-# cluster:
-#   partition: "low"  # Default partition - adjust to your cluster
-#   account: "wp3"      # Set your SLURM account if required
-#   default_resources:
-#     mem_mb: 6000
-#     runtime: 60
-#     nodes: 1
-#     ntasks: 1
+  # Happy benchmarking tasks
+  happy_benchmarking:
+    mem_mb: 20000
+    runtime: 720
+    cpus_per_task: 16
+

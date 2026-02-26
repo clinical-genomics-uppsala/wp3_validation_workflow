@@ -19,16 +19,25 @@ include: "rules/vcf_validation.smk"
 include: "rules/metrics_validation.smk" 
 include: "rules/bam_validation.smk"
 include: "rules/misc_validation.smk"
+include: "rules/happy_benchmarking.smk"
 
 # Rule order to resolve ambiguous rules - prioritize specific rules over general ones
 ruleorder: checksum_vcf_gz > checksum_dna_cram > checksum_metrics > checksum_multiqc > checksum_samtools_stats > checksum_collection_of_files > checksum_default > validate_vcf_gz > validate_dna_cram > validate_metrics > validate_multiqc > validate_samtools_stats > validate_collection_of_files > validate_default
+
+# Determine which happy benchmarking targets to include based on input files
+happy_targets = []
+if any(any(name in f for name in ["HG001", "NA12878", "HM12878"]) and f.endswith(".vcf.gz") for f in FILES_AND_CHECKSUMS.keys()):
+    happy_targets.append(f"{PUBLISH_DIR}/happy_HG001_v4_2_1/HG001_happy.out.summary.csv")
+if any(any(name in f for name in ["HG002", "NA24385", "HN24385"]) and f.endswith(".vcf.gz") for f in FILES_AND_CHECKSUMS.keys()):
+    happy_targets.append(f"{PUBLISH_DIR}/happy_HG002_v4_2_1/HG002_happy.out.summary.csv")
 
 # Target rule
 rule all:
     input:
         f"{PUBLISH_DIR}/validation_results.txt",
         f"{PUBLISH_DIR}/validation_summary.txt",
-        f"{PUBLISH_DIR}/.workflow_status"
+        f"{PUBLISH_DIR}/.workflow_status",
+        happy_targets
 
 # Collect all validation results
 rule collect_results:
@@ -158,3 +167,9 @@ rule create_validation_data:
                     with open(checksum_file) as cf:
                         checksum = cf.read().strip()
                         f.write(f"{file_path}\t{checksum}\n")
+
+
+# Target rule for happy benchmarking
+rule run_happy_benchmarking:
+    input:
+        happy_targets

@@ -13,6 +13,13 @@ def get_matching_file_for_pattern(wildcards):
     """Get file that matches wildcards.file and one of the file_patterns"""
     import re
     patterns = config.get("file_patterns", [])
+    
+    # If no patterns are defined, just return the file if it exists in the dictionary
+    if not patterns:
+        for f in FILES_AND_CHECKSUMS.keys():
+            if Path(f).name == wildcards.file:
+                return f
+                
     for f in FILES_AND_CHECKSUMS.keys():
         if Path(f).name == wildcards.file:
             # Check if this file matches any of the patterns
