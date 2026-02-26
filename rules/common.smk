@@ -1,5 +1,14 @@
 # Common functions and utilities for validation rules
 
+def get_resource(resource_type, resource_name, default_value=None):
+    """Get resource value from config with fallback to default"""
+    try:
+        return config["resources"][resource_type][resource_name]
+    except KeyError:
+        if default_value is not None:
+            return default_value
+        raise ValueError(f"Resource {resource_type}.{resource_name} not found in config and no default provided")
+
 def get_matching_file_for_pattern(wildcards):
     """Get file that matches wildcards.file and one of the file_patterns"""
     import re

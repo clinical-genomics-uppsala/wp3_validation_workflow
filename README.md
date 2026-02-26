@@ -21,6 +21,10 @@ wp3_validation_workflow/
 ├── config.yaml                 # Configuration parameters
 ├── test_input.tsv              # Example input file
 ├── requirements.txt            # Python dependencies
+├── setup_slurm.sh              # Setup script for SLURM environment
+├── profiles/
+│   └── slurm/                  # SLURM executor profile
+│       └── config.yaml         # SLURM profile configuration
 └── rules/
     |── common-smk              # rule input functions 
     ├── vcf_validation.smk      # VCF file validation rules
@@ -41,6 +45,8 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+**Note**: The requirements include the SLURM executor plugin for cluster execution.
+
 
 ### 2. Prepare Input File
 
@@ -55,11 +61,44 @@ data/sample.vcf	d41d8cd98f00b204e9800998ecf8427e
 results/sample.T.bam	e3b0c44298fc1c149afbf4c8996fb924
 ```
 
+#### For `create_validation_data` Workflow
+
+When using the `create_validation_data` target to generate new checksums, the input file format is the same, but the `checksum` column values are ignored (can be placeholder values). The workflow will:
+
+1. Read the `file` column to identify which files to process
+2. Generate new checksums for each file using the same logic as validation
+3. Output a new TSV file (`results/new_validation_data.tsv`) with updated checksums
+
+Example input for checksum generation:
+```
+file	checksum
+data/sample.vcf	PLACEHOLDER
+results/sample.T.bam	PLACEHOLDER
+metrics/sample.alignment_summary_metrics.txt	PLACEHOLDER
+```
+
+The generated output will contain the actual calculated checksums:
+```
+data/sample.vcf	a1b2c3d4e5f6789012345678901234567
+results/sample.T.bam	b2c3d4e5f6789012345678901234567a1
+metrics/sample.alignment_summary_metrics.txt	c3d4e5f6789012345678901234567a1b2
+```
+
 ### 3. Configure Workflow
 
-Edit `config.yaml` to set:
+Edit [config.yaml](config.yaml) to set:
 - `input`: Path to your input TSV file
 - `publish_dir`: Directory for output results
+- `resources`: Resource requirements for different rule types (memory, runtime, CPUs)
+
+**Resource Configuration**: The workflow uses configurable resources for different validation tasks:
+- `vcf_validation`: For VCF file processing (default: 8GB RAM, 4 hours)
+- `bam_validation`: For BAM/CRAM processing (default: 6GB RAM, 4 hours) 
+- `metrics_validation`: For metrics files (default: 2GB RAM, 4 hours)
+- `misc_validation`: For other file types (default: 4GB RAM, 4 hours)
+- `summary_tasks`: For result collection (default: 2GB RAM, 4 hours)
+
+You can customize these in [config.yaml](config.yaml) to match your cluster's requirements and file sizes.
 
 ### 4. Run Validation
 
@@ -67,20 +106,65 @@ Edit `config.yaml` to set:
 # Dry run to check workflow
 snakemake -n
 
-# Generate a new md5sum tsv file from a directory of results
+# Run locally (default)
+snakemake --use-singularity --singularity-args "--bind $(pwd)" --keep-going -j 2
+
+# Run on SLURM cluster using the provided profile
+# (executor: slurm, singularity settings, and keep-going are specified in profiles/slurm/config.yaml)
+snakemake --profile profiles/slurm
+
+# Generate a new md5sum tsv file from a directory of results (checksum generation mode)
 snakemake create_validation_data --use-singularity --singularity-args "--bind $(pwd)" 
 
-# Generate validation data (checksums) instead of validating
-snakemake --use-singularity --singularity-args "--bind $(pwd)" --keep-going -j 2
+# Generate a new md5sum tsv file instead of validating on SLURM
+snakemake create_validation_data --profile profiles/slurm
+```
+
+**Note on `create_validation_data`**: This target generates new checksums for the files listed in your input TSV, rather than validating against existing checksums. Use this when:
+- Setting up validation data for the first time
+- Files have been updated and you need new reference checksums
+- Creating checksums for a new dataset
+
+The workflow will create `results/new_validation_data.tsv` with the format needed for subsequent validation runs.
+```
+
+### 5. SLURM Cluster Usage
+
+The pipeline includes a SLURM profile for cluster execution:
+
+- **Profile location**: `profiles/slurm/`
+- **Configuration**: Edit `profiles/slurm/config.yaml`
+- **Default resources**: 4GB RAM, 4 hour runtime, 1 CPU per job
+- **Partition**: `main` (modify in `config.yaml` if needed)
+
+To customize for your cluster:
+1. Edit `profiles/slurm/config.yaml` to set your partition in `default-resources`
+2. Adjust default resources in `profiles/slurm/config.yaml`  
+3. Modify resource requirements in `config.yaml` for different rule types
+4. Individual rules can override resources using the `resources:` directive
+
+Example resource customization in [config.yaml](config.yaml):
+```yaml
+resources:
+  vcf_validation:
+    mem_mb: 16000  # Increase for large VCF files
+    runtime: 60    # Increase timeout for complex processing
+    cpus_per_task: 2
 ```
 
 ## Output
 
+### Validation Workflow Output
 - `results/validation_results.txt`: Consolidated validation results
--  `results/validation_summary .txt`:  Summary if files that passed or failed validation
+- `results/validation_summary.txt`: Summary of files that passed or failed validation
 - `validation/{file}.validated`: Individual validation results per file
 - `checksums/{file}.checksum`: Calculated checksums per file
-- `results/new_validation_data.tsv`: New validation data file (when using create_validation_data target)
+
+### `create_validation_data` Workflow Output
+- `results/new_validation_data.tsv`: New validation data file with calculated checksums
+- `checksums/{file}.checksum`: Individual checksum files for each processed file
+
+The `new_validation_data.tsv` file can be used as input for subsequent validation runs by copying it to your input file (e.g., `test_input.tsv`).
 
 ## Validation Logic
 

@@ -8,8 +8,12 @@ rule checksum_metrics:
         "checksums/{file}.checksum"
     wildcard_constraints:
         file=".*\.(insert_size_metrics|WGSMetrics|alignment_summary_metrics|duplication_metrics)\.txt"
+    resources:
+        mem_mb=get_resource("metrics_validation", "mem_mb", 2000),
+        runtime=get_resource("metrics_validation", "runtime", 15),
+        cpus_per_task=get_resource("metrics_validation", "cpus_per_task", 1)
     container:
-        config.get("container")
+        config.get("default_container")
     shell:
         """
         md5=$(cat {input.file} | \
@@ -31,8 +35,12 @@ rule validate_metrics:
         expected_checksum=lambda wildcards: FILES_AND_CHECKSUMS[[f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file and any(wildcards.file.endswith(pattern) for pattern in ['insert_size_metrics.txt', 'WGSMetrics.txt', 'alignment_summary_metrics.txt', 'duplication_metrics.txt'])][0]]
     wildcard_constraints:
         file=".*\.(insert_size_metrics|WGSMetrics|alignment_summary_metrics|duplication_metrics)\.txt"
+    resources:
+        mem_mb=get_resource("metrics_validation", "mem_mb", 2000),
+        runtime=get_resource("metrics_validation", "runtime", 15),
+        cpus_per_task=get_resource("metrics_validation", "cpus_per_task", 1)
     container:
-        config.get("container")
+        config.get("default_container")
     shell:
         """
         calculated_md5=$(cat {input.checksum})
@@ -53,8 +61,12 @@ rule checksum_multiqc:
         "checksums/{file}.checksum"
     wildcard_constraints:
         file="multiqc_.*\.html"
+    resources:
+        mem_mb=get_resource("misc_validation", "mem_mb", 4000),
+        runtime=get_resource("misc_validation", "runtime", 20),
+        cpus_per_task=get_resource("misc_validation", "cpus_per_task", 1)
     container:
-        config.get("container")
+        config.get("default_container")
     shell:
         """
         md5=$(cat {input.file} | \
@@ -78,8 +90,12 @@ rule validate_multiqc:
         expected_checksum=lambda wildcards: FILES_AND_CHECKSUMS[[f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file][0]]
     wildcard_constraints:
         file="multiqc_.*\.html"
+    resources:
+        mem_mb=get_resource("misc_validation", "mem_mb", 4000),
+        runtime=get_resource("misc_validation", "runtime", 20),
+        cpus_per_task=get_resource("misc_validation", "cpus_per_task", 1)
     container:
-        config.get("container")
+        config.get("default_container")
     shell:
         """
         calculated_md5=$(cat {input.checksum})
@@ -100,8 +116,12 @@ rule checksum_samtools_stats:
         "checksums/{file}.checksum"
     wildcard_constraints:
         file=".*samtools-stats\.txt"
+    resources:
+        mem_mb=get_resource("metrics_validation", "mem_mb", 2000),
+        runtime=get_resource("metrics_validation", "runtime", 15),
+        cpus_per_task=get_resource("metrics_validation", "cpus_per_task", 1)
     container:
-        config.get("container")
+        config.get("default_container")
     shell:
         """
         md5=$(cat {input.file} | \
@@ -123,8 +143,12 @@ rule validate_samtools_stats:
         expected_checksum=lambda wildcards: FILES_AND_CHECKSUMS[[f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file][0]]
     wildcard_constraints:
         file=".*samtools-stats\.txt"
+    resources:
+        mem_mb=get_resource("metrics_validation", "mem_mb", 2000),
+        runtime=get_resource("metrics_validation", "runtime", 15),
+        cpus_per_task=get_resource("metrics_validation", "cpus_per_task", 1)
     container:
-        config.get("container")
+        config.get("default_container")
     shell:
         """
         calculated_md5=$(cat {input.checksum})

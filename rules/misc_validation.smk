@@ -9,9 +9,13 @@ rule checksum_collection_of_files:
     params:
         patterns=config.get("file_patterns", [])
     wildcard_constraints:
-        file="^(?!.*\\.vcf(\\.gz)?$)(?!.*\\.cram$)(?!.*\\.(insert_size_metrics|WGSMetrics|alignment_summary_metrics|duplication_metrics)\\.txt$)(?!.*samtools-stats\\.txt$)(?!.*coverage_and_mutations.*$)(?!multiqc_.*\\.html$).*"
+        file="^(?!.*\.vcf(\.gz)?$)(?!.*\.cram$)(?!.*\.(insert_size_metrics|WGSMetrics|alignment_summary_metrics|duplication_metrics)\.txt$)(?!.*samtools-stats\.txt$)(?!.*coverage_and_mutations.*$)(?!multiqc_.*\.html$).*"
+    resources:
+        mem_mb=get_resource("misc_validation", "mem_mb", 4000),
+        runtime=get_resource("misc_validation", "runtime", 20),
+        cpus_per_task=get_resource("misc_validation", "cpus_per_task", 1)
     container:
-        config.get("container")
+        config.get("default_container")
     shell:
         """
         # Create checksum for files matching patterns
@@ -25,8 +29,12 @@ rule checksum_default:
         file=lambda wildcards: [f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file][0]
     output:
         "checksums/{file}.checksum"
+    resources:
+        mem_mb=get_resource("misc_validation", "mem_mb", 4000),
+        runtime=get_resource("misc_validation", "runtime", 20),
+        cpus_per_task=get_resource("misc_validation", "cpus_per_task", 1)
     container:
-        config.get("container")
+        config.get("default_container")
     shell:
         """
         # Default checksum - simple file checksum
@@ -44,8 +52,12 @@ rule validate_collection_of_files:
     params:
         expected_checksum=lambda wildcards: FILES_AND_CHECKSUMS[[f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file][0]],
         patterns=config.get("file_patterns", [])
+    resources:
+        mem_mb=get_resource("misc_validation", "mem_mb", 4000),
+        runtime=get_resource("misc_validation", "runtime", 20),
+        cpus_per_task=get_resource("misc_validation", "cpus_per_task", 1)
     container:
-        config.get("container")
+        config.get("default_container")
     shell:
         """
         calculated_md5=$(cat {input.checksum})
@@ -67,8 +79,12 @@ rule validate_default:
         "validation/{file}.validated"
     params:
         expected_checksum=lambda wildcards: FILES_AND_CHECKSUMS[[f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file][0]]
+    resources:
+        mem_mb=get_resource("misc_validation", "mem_mb", 4000),
+        runtime=get_resource("misc_validation", "runtime", 20),
+        cpus_per_task=get_resource("misc_validation", "cpus_per_task", 1)
     container:
-        config.get("container")
+        config.get("default_container")
     shell:
         """
         calculated_md5=$(cat {input.checksum})

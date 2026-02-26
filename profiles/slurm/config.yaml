@@ -1,0 +1,39 @@
+# Snakemake SLURM executor plugin profile
+# See: https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html
+
+executor: slurm
+jobs: 100
+latency-wait: 60
+max-jobs-per-second: 1
+max-status-checks-per-second: 10
+local-cores: 1
+restart-times: 0
+printshellcmds: True
+keep-going: True
+# logger: rich
+
+# Singularity configuration
+use-singularity: True
+singularity-args: "--bind $(pwd),/scratch,/beegfs-storage/"
+
+# Default job resources (applied to all jobs unless overridden)
+default-resources:
+  - mem_mb=4000
+  - runtime=240
+  - cpus_per_task=1
+  - slurm_partition=low
+  - slurm_account=wp4
+
+# Resource constraints (system limits)
+resources:
+  - cpus_per_task=100
+
+# Set default resources for all rules
+set-resources:
+  - "*:mem_mb=4000"
+  - "*:runtime=240"
+  - "*:cpus_per_task=1"
+
+# Set threads for rules
+set-threads:
+  - "*=1"

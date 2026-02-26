@@ -8,8 +8,12 @@ rule checksum_vcf_gz:
         "checksums/{file}.checksum"
     wildcard_constraints:
         file=".*\.vcf\.gz"
+    resources:
+        mem_mb=get_resource("vcf_validation", "mem_mb", 8000),
+        runtime=get_resource("vcf_validation", "runtime", 30),
+        cpus_per_task=get_resource("vcf_validation", "cpus_per_task", 1)
     container:
-        config.get("container")
+        config.get("default_container")
     shell:
         """
         md5=$(zcat {input.file} | \
@@ -27,12 +31,16 @@ rule validate_vcf_gz:
         checksum="checksums/{file}.checksum"
     output:
         "validation/{file}.validated"
+    resources:
+        mem_mb=get_resource("vcf_validation", "mem_mb", 8000),
+        runtime=get_resource("vcf_validation", "runtime", 30),
+        cpus_per_task=get_resource("vcf_validation", "cpus_per_task", 1)
     params:
         expected_checksum=lambda wildcards: FILES_AND_CHECKSUMS[[f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file][0]]
     wildcard_constraints:
         file=".*\.vcf\.gz"
     container:
-        config.get("container")
+        config.get("default_container")
     shell:
         """
         calculated_md5=$(cat {input.checksum})

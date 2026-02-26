@@ -35,6 +35,10 @@ rule collect_results:
         expand("validation/{file}.validated", file=[Path(f).name for f in FILES_AND_CHECKSUMS.keys()])
     output:
         f"{PUBLISH_DIR}/validation_results.txt"
+    resources:
+        mem_mb=get_resource("summary_tasks", "mem_mb", 2000),
+        runtime=get_resource("summary_tasks", "runtime", 10),
+        cpus_per_task=get_resource("summary_tasks", "cpus_per_task", 1)
     shell:
         """
         cat {input} > {output}
@@ -42,10 +46,16 @@ rule collect_results:
 
 # Create validation summary report showing pass/fail status
 rule validation_summary:
+    input:
+        expand("validation/{file}.validated", file=[Path(f).name for f in FILES_AND_CHECKSUMS.keys()])
     output:
         f"{PUBLISH_DIR}/validation_summary.txt"
     params:
         expected_files=[Path(f).name for f in FILES_AND_CHECKSUMS.keys()]
+    resources:
+        mem_mb=get_resource("summary_tasks", "mem_mb", 2000),
+        runtime=get_resource("summary_tasks", "runtime", 10),
+        cpus_per_task=get_resource("summary_tasks", "cpus_per_task", 1)
     shell:
         """
         echo "VALIDATION SUMMARY REPORT" > {output}
@@ -118,8 +128,13 @@ rule create_validation_data:
         expand("checksums/{file}.checksum", file=[Path(f).name for f in FILES_AND_CHECKSUMS.keys()])
     output:
         f"{PUBLISH_DIR}/new_validation_data.tsv"
+    resources:
+        mem_mb=get_resource("summary_tasks", "mem_mb", 2000),
+        runtime=get_resource("summary_tasks", "runtime", 10),
+        cpus_per_task=get_resource("summary_tasks", "cpus_per_task", 1)
     run:
         with open(output[0], 'w') as f:
+            f.write("file\tchecksum\n")
             for file_path in FILES_AND_CHECKSUMS.keys():
                 file_name = Path(file_path).name
                 checksum_file = f"checksums/{file_name}.checksum"
