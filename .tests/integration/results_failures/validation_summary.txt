@@ -1,0 +1,20 @@
+VALIDATION SUMMARY REPORT
+=========================
+
+SUMMARY:
+  Total files: 3
+  Passed: 1
+  Failed: 2
+
+PASSED FILES:
+-------------
+  ✓ test_sample.samtools-stats.txt
+
+FAILED FILES:
+-------------
+  ✗ test_sample.vcf.gz
+    Failed validation: test_sample.vcf.gz: INTENTIONALLY_WRONG_CHECKSUM_1 != 7d995fa5b93ac55067f0afc45cea91a8
+
+  ✗ test_sample.alignment_summary_metrics.txt
+    Failed validation: test_sample.alignment_summary_metrics.txt: INTENTIONALLY_WRONG_CHECKSUM_2 != 6a8cb540663ac4bf90786d550be90fdb
+

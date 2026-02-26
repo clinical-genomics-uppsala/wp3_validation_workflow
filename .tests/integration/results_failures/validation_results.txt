@@ -1,0 +1,3 @@
+Failed validation: test_sample.vcf.gz: INTENTIONALLY_WRONG_CHECKSUM_1 != 7d995fa5b93ac55067f0afc45cea91a8
+Failed validation: test_sample.alignment_summary_metrics.txt: INTENTIONALLY_WRONG_CHECKSUM_2 != 6a8cb540663ac4bf90786d550be90fdb
+Validated: test_sample.samtools-stats.txt

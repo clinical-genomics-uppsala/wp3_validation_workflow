@@ -1,0 +1,4 @@
+file	checksum
+.tests/integration/data/test_sample.vcf.gz	INTENTIONALLY_WRONG_CHECKSUM_1
+.tests/integration/data/test_sample.alignment_summary_metrics.txt	INTENTIONALLY_WRONG_CHECKSUM_2
+.tests/integration/data/test_sample.samtools-stats.txt	4ef55ef4bd066be18d08c69df6fceefc

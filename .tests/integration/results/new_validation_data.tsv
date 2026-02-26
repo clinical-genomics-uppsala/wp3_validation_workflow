@@ -1,0 +1,4 @@
+file	checksum
+.tests/integration/data/test_sample.vcf.gz	7d995fa5b93ac55067f0afc45cea91a8
+.tests/integration/data/test_sample.alignment_summary_metrics.txt	6a8cb540663ac4bf90786d550be90fdb
+.tests/integration/data/test_sample.samtools-stats.txt	4ef55ef4bd066be18d08c69df6fceefc

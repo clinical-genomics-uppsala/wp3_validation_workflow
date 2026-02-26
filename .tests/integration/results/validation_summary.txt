@@ -1,0 +1,17 @@
+VALIDATION SUMMARY REPORT
+=========================
+
+SUMMARY:
+  Total files: 3
+  Passed: 3
+  Failed: 0
+
+PASSED FILES:
+-------------
+  ✓ test_sample.vcf.gz
+  ✓ test_sample.alignment_summary_metrics.txt
+  ✓ test_sample.samtools-stats.txt
+
+FAILED FILES:
+-------------
+  None - All files passed validation! ✓

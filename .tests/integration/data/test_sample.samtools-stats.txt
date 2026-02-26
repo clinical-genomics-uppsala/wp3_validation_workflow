@@ -1,0 +1,44 @@
+# This file was produced by samtools stats (1.15.1+htslib-1.15.1) and can be plotted using plot-bamstats
+# The command line was:  samtools stats test_sample.bam
+# CHK, Checksum	[2]Read Names	[3]Sequences	[4]Qualities
+# CHK	CRC32 of reads which passed filtering followed by addition (32bit overflow)
+CHK	f1234567	f2345678	f3456789
+# Summary Numbers. Use `grep ^SN | cut -f 2-` to extract this part.
+SN	raw total sequences:	10000
+SN	filtered sequences:	0
+SN	sequences:	10000
+SN	is sorted:	1
+SN	1st fragments:	5000
+SN	last fragments:	5000
+SN	reads mapped:	9800
+SN	reads mapped and paired:	9600
+SN	reads unmapped:	200
+SN	reads properly paired:	9400
+SN	reads paired:	10000
+SN	reads duplicated:	150
+SN	reads MQ0:	50
+SN	reads QC failed:	0
+SN	non-primary alignments:	0
+SN	total length:	1500000
+SN	total first fragment length:	750000
+SN	total last fragment length:	750000
+SN	bases mapped:	1470000
+SN	bases mapped (cigar):	1465000
+SN	bases trimmed:	0
+SN	bases duplicated:	22500
+SN	mismatches:	14650
+SN	error rate:	1.000000e-02
+SN	average length:	150
+SN	average first fragment length:	150
+SN	average last fragment length:	150
+SN	maximum length:	150
+SN	maximum first fragment length:	150
+SN	maximum last fragment length:	150
+SN	average quality:	35.5
+SN	insert size average:	350.0
+SN	insert size standard deviation:	50.0
+SN	inward oriented pairs:	4700
+SN	outward oriented pairs:	100
+SN	pairs with other orientation:	100
+SN	pairs on different chromosomes:	100
+SN	percentage of properly paired reads (%):	94.0

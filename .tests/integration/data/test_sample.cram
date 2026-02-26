@@ -1,0 +1,4 @@
+# Placeholder CRAM file for integration testing
+# In a real test, this would be a binary CRAM file
+# For now, this serves as a placeholder to test file detection patterns
+PLACEHOLDER_CRAM_DATA

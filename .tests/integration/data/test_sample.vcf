@@ -1,0 +1,15 @@
+##fileformat=VCFv4.2
+##fileDate=20240101
+##source=test_pipeline_v1.0
+##reference=GRCh38
+##contig=<ID=chr1,length=248956422>
+##contig=<ID=chr2,length=242193529>
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE1
+chr1	100	.	A	T	60	PASS	DP=30;AF=0.5	GT:DP:AD	0/1:30:15,15
+chr1	200	rs123	G	C	80	PASS	DP=40;AF=0.25	GT:DP:AD	0/1:40:30,10
+chr2	150	.	T	G	70	PASS	DP=35;AF=0.33	GT:DP:AD	0/1:35:23,12

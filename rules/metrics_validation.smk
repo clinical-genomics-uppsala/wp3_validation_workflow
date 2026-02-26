@@ -49,7 +49,6 @@ rule validate_metrics:
             echo "Validated: {wildcards.file}" > {output}
         else
             echo "Failed validation: {wildcards.file}: {params.expected_checksum} != $calculated_md5" > {output}
-            exit 1
         fi
         """
 
@@ -104,7 +103,6 @@ rule validate_multiqc:
             echo "Validated: {wildcards.file}" > {output}
         else
             echo "Failed validation: {wildcards.file}: {params.expected_checksum} != $calculated_md5" > {output}
-            exit 1
         fi
         """
 
@@ -157,6 +155,5 @@ rule validate_samtools_stats:
             echo "Validated: {wildcards.file}" > {output}
         else
             echo "Failed validation: {wildcards.file}: {params.expected_checksum} != $calculated_md5" > {output}
-            exit 1
         fi
         """

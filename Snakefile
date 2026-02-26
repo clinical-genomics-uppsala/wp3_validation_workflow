@@ -27,7 +27,8 @@ ruleorder: checksum_vcf_gz > checksum_dna_cram > checksum_metrics > checksum_mul
 rule all:
     input:
         f"{PUBLISH_DIR}/validation_results.txt",
-        f"{PUBLISH_DIR}/validation_summary.txt"
+        f"{PUBLISH_DIR}/validation_summary.txt",
+        f"{PUBLISH_DIR}/.workflow_status"
 
 # Collect all validation results
 rule collect_results:
@@ -119,6 +120,21 @@ rule validation_summary:
         
         if [ "$has_failures" = false ]; then
             echo "  None - All files passed validation! ✓" >> {output}
+        fi
+        """
+
+# Rule to check final status and fail workflow if any validations failed
+rule check_workflow_status:
+    input:
+        summary=f"{PUBLISH_DIR}/validation_summary.txt"
+    output:
+        touch(f"{PUBLISH_DIR}/.workflow_status")
+    localrule: True
+    shell:
+        """
+        if grep -q "Failed: [1-9]" {input.summary}; then
+            echo "Validation failures detected. Failing workflow." >&2
+            exit 1
         fi
         """
 

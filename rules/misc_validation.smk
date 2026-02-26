@@ -66,7 +66,6 @@ rule validate_collection_of_files:
             echo "Validated: {wildcards.file}" > {output}
         else
             echo "Failed validation: {wildcards.file}: {params.expected_checksum} != $calculated_md5" > {output}
-            exit 1
         fi
         """
 
@@ -93,6 +92,5 @@ rule validate_default:
             echo "Validated: {wildcards.file}" > {output}
         else
             echo "Failed validation: {wildcards.file}: {params.expected_checksum} != $calculated_md5" > {output}
-            exit 1
         fi
         """
