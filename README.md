@@ -1,6 +1,6 @@
-# Validation Workflow - Snakemake Version
+# WP3 Pipeline Validation Workflow 
 
-This Snakemake pipeline replicates the functionality of the Nextflow validation workflow in `validate_result.nf`.
+Validate the output files from CGUs WP3 pipelines. This is used to track changes in pipeline results and to guard against any unexpected changes during pipeline updates.
 
 ## Overview
 
@@ -106,7 +106,7 @@ You can customize these in [config.yaml](config.yaml) to match your cluster's re
 # Dry run to check workflow
 snakemake -n
 
-# Run locally (default)
+# Run locally 
 snakemake --use-singularity --singularity-args "--bind $(pwd)" --keep-going -j 2
 
 # Run on SLURM cluster using the provided profile
