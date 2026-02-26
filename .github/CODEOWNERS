@@ -1,0 +1,9 @@
+# CODEOWNERS for WP3 Validation Workflow
+# Specify users or teams responsible for code review and approval
+
+# Example: All files owned by @padco251
+* @padco251
+
+# You can add more granular ownership if needed:
+# rules/* @padco251
+# .github/workflows/* @padco251
