@@ -7,6 +7,10 @@ default_container: "docker://hydragenetics/common:3.1.1"
 
 reference_genome: ""
 
+# Suffix for the VCF file to be used in happy benchmarking
+happy_vcf_suffix: "snv_indels.vcf.gz"
+truvari_vcf_suffix: "svdb_merged.vcf.gz"
+
 # Rule-specific resource requirements
 resources:
   # VCF file processing (larger files may need more resources)

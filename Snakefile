@@ -26,9 +26,11 @@ ruleorder: checksum_vcf_gz > checksum_dna_cram > checksum_metrics > checksum_mul
 
 # Determine which happy benchmarking targets to include based on input files
 happy_targets = []
-if any(any(name in f for name in ["HG001", "NA12878", "HM12878"]) and f.endswith(".vcf.gz") for f in FILES_AND_CHECKSUMS.keys()):
+happy_vcf_suffix = config.get("happy_vcf_suffix", "snv_indels.vcf.gz")
+
+if any(any(name in f for name in ["HG001", "NA12878", "HM12878"]) and f.endswith(happy_vcf_suffix) for f in FILES_AND_CHECKSUMS.keys()):
     happy_targets.append(f"{PUBLISH_DIR}/happy_HG001_v4_2_1/HG001_happy.out.summary.csv")
-if any(any(name in f for name in ["HG002", "NA24385", "HM24385"]) and f.endswith(".vcf.gz") for f in FILES_AND_CHECKSUMS.keys()):
+if any(any(name in f for name in ["HG002", "NA24385", "HN24385"]) and f.endswith(happy_vcf_suffix) for f in FILES_AND_CHECKSUMS.keys()):
     happy_targets.append(f"{PUBLISH_DIR}/happy_HG002_v4_2_1/HG002_happy.out.summary.csv")
 
 # Target rule

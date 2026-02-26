@@ -50,7 +50,7 @@ rule get_benchmark_hg002:
 # Rule to run happy benchmarking for HG001 (NA12878)
 rule happy_benchmarking_hg001_v4_2_1:
     input:
-        vcf=lambda wildcards: [f for f in FILES_AND_CHECKSUMS.keys() if any(name in f for name in ["HG001", "NA12878", "HM12878"]) and f.endswith(".vcf.gz")][0],
+        vcf=lambda wildcards: [f for f in FILES_AND_CHECKSUMS.keys() if any(name in f for name in ["HG001", "NA12878", "HM12878"]) and f.endswith(config.get("happy_vcf_suffix", ".vcf.gz"))][0],
         strat_dir="stratification/GRCh38@all",
         bench_vcf="benchmark/HG001_GRCh38_1_22_v4.2.1_benchmark.vcf.gz",
         bench_tbi="benchmark/HG001_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi",
@@ -83,7 +83,7 @@ rule happy_benchmarking_hg001_v4_2_1:
 # Rule to run happy benchmarking for HG002 (NA24385)
 rule happy_benchmarking_hg002_v4_2_1:
     input:
-        vcf=lambda wildcards: [f for f in FILES_AND_CHECKSUMS.keys() if any(name in f for name in ["HG002", "NA24385", "HM24385"]) and f.endswith(".vcf.gz")][0],
+        vcf=lambda wildcards: [f for f in FILES_AND_CHECKSUMS.keys() if any(name in f for name in ["HG002", "NA24385", "HN24385"]) and f.endswith(config.get("happy_vcf_suffix", ".vcf.gz"))][0],
         strat_dir="stratification/GRCh38@all",
         bench_vcf="benchmark/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz",
         bench_tbi="benchmark/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi",
