@@ -14,6 +14,18 @@ echo "========================================="
 total_tests=0
 passed_tests=0
 
+# Test 0: Dry-run (DAG resolution, no real data needed)
+echo
+echo "Test 0: Dry-Run DAG Validation (Expected: All Pass)"
+echo "----------------------------------------------------"
+total_tests=$((total_tests + 1))
+if ./.tests/integration/test_dryrun.sh; then
+    echo "✓ Test 0 PASSED: Dry-run DAG resolved correctly"
+    passed_tests=$((passed_tests + 1))
+else
+    echo "✗ Test 0 FAILED: Dry-run DAG resolution failed"
+fi
+
 # Test 1: Normal validation (should pass)
 echo
 echo "Test 1: Normal Validation (Expected: All Pass)"

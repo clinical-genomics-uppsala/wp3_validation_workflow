@@ -4,3 +4,7 @@ input: "pipeline_md5sums/poirot_md5sums.tsv"
 reference_genome: "/beegfs-storage/data/ref_genomes/GRCh38/GRCmasked/GCA_000001405.15_GRCh38_no_alt_analysis_set_GRCmasked.fasta"
 
 happy_vcf_suffix: "snv_indels.vcf.gz"
+
+truvari_benchmarking:
+  refdist: 2000
+  chunksize: 5000

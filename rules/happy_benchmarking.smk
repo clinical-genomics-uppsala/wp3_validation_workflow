@@ -76,7 +76,7 @@ rule happy_benchmarking_hg001_v4_2_1:
           -f {input.bench_bed} \
           --reference {params.ref_fasta} \
           --stratification {input.strat_dir}/GRCh38-all-stratifications.tsv  \
-          -o {PUBLISH_DIR}/happy_{params.sample}/{params.sample}_happy.out \
+          -o {PUBLISH_DIR}/happy_{params.sample}_v4_2_1/{params.sample}_happy.out \
           --pass-only --engine=vcfeval --threads {resources.cpus_per_task}
         """
 
@@ -109,7 +109,7 @@ rule happy_benchmarking_hg002_v4_2_1:
           -f {input.bench_bed} \
           --reference {params.ref_fasta} \
           --stratification {input.strat_dir}/GRCh38-all-stratifications.tsv \
-          -o {PUBLISH_DIR}/happy_{params.sample}/{params.sample}_happy.out \
+          -o {PUBLISH_DIR}/happy_{params.sample}_v4_2_1/{params.sample}_happy.out \
           --pass-only --engine=vcfeval --threads {resources.cpus_per_task}
         """
 
