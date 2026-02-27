@@ -1,1 +1,3 @@
 input: "pipeline_md5sums/fada_tc_md5sums.tsv"
+
+happy_vcf_suffix: "hard-filtered.vcf.gz"

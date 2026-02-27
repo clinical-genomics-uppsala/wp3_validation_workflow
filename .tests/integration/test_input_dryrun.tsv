@@ -1,0 +1,11 @@
+file	checksum
+.tests/integration/data/test_sample.vcf.gz	7d995fa5b93ac55067f0afc45cea91a8
+.tests/integration/data/test_sample.alignment_summary_metrics.txt	6a8cb540663ac4bf90786d550be90fdb
+.tests/integration/data/test_sample.samtools-stats.txt	4ef55ef4bd066be18d08c69df6fceefc
+.tests/integration/data/HG001.snv_indels.vcf.gz	00000000000000000000000000000001
+.tests/integration/data/HG002.snv_indels.vcf.gz	00000000000000000000000000000002
+.tests/integration/data/HG002.svdb_merged.vcf.gz	00000000000000000000000000000003
+.tests/integration/data/HM24385-1.snv_indels.vcf.gz	00000000000000000000000000000004
+.tests/integration/data/HM24385-1.svdb_merged.vcf.gz	00000000000000000000000000000005
+.tests/integration/data/HM24385-2.snv_indels.vcf.gz	00000000000000000000000000000006
+.tests/integration/data/HM24385-2.svdb_merged.vcf.gz	00000000000000000000000000000007

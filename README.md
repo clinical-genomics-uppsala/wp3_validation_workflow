@@ -13,24 +13,36 @@ The pipeline validates various bioinformatics file types by calculating checksum
 - Samtools stats files
 - Various other file types
 
+In addition, when **Genome in a Bottle (GIAB)** control samples are detected in the input TSV, the workflow automatically runs accuracy benchmarking:
+
+- **SNV/Indel benchmarking** using [hap.py](https://github.com/Illumina/hap.py) against GIAB v4.2.1 truth sets for HG001 and/or HG002 (and their aliases NA12878, HM12878, NA24385, HM24385).
+- **Structural variant (SV) benchmarking** using [Truvari](https://github.com/ACEnglish/truvari) against the GIAB T2T HG002 SV truth set for HG002 samples.
+
+Multiple replicates of the same GIAB sample (e.g. `HM24385-1` and `HM24385-2`) are each benchmarked independently with results written to separate output directories.
+
 ## File Structure
 
 ```
 wp3_validation_workflow/
-├── Snakefile                    # Main workflow file
-├── config.yaml                 # Configuration parameters
-├── test_input.tsv              # Example input file
-├── requirements.txt            # Python dependencies
-├── setup_slurm.sh              # Setup script for SLURM environment
+├── requirements.txt             # Python dependencies
+├── config/
+│   ├── config.yaml             # Base configuration
+│   └── config_<pipeline>.yaml  # Pipeline-specific configuration
 ├── profiles/
 │   └── slurm/                  # SLURM executor profile
 │       └── config.yaml         # SLURM profile configuration
-└── rules/
-    |── common-smk              # rule input functions 
-    ├── vcf_validation.smk      # VCF file validation rules
-    ├── bam_validation.smk      # BAM file validation rules
-    ├── metrics_validation.smk  # Metrics file validation rules
-    └── misc_validation.smk     # Other file type validation rules
+├── scripts/
+│   └── process_truvari_ga4gh_vcfs.py  # Truvari GA4GH summary script
+└── workflow/
+    ├── Snakefile               # Main workflow file
+    └── rules/
+        ├── common.smk              # Shared input functions and helpers
+        ├── vcf_validation.smk      # VCF file validation rules
+        ├── bam_validation.smk      # BAM/CRAM file validation rules
+        ├── metrics_validation.smk  # Metrics file validation rules
+        ├── misc_validation.smk     # Other file type validation rules
+        ├── happy_benchmarking.smk  # SNV/Indel GIAB benchmarking (hap.py)
+        └── truvari_benchmarking.smk  # SV GIAB benchmarking (Truvari)
 ```
 
 ## Usage
@@ -97,8 +109,40 @@ Edit [config.yaml](config.yaml) to set:
 - `metrics_validation`: For metrics files (default: 2GB RAM, 4 hours)
 - `misc_validation`: For other file types (default: 4GB RAM, 4 hours)
 - `summary_tasks`: For result collection (default: 2GB RAM, 4 hours)
+- `happy_benchmarking`: For hap.py SNV/Indel benchmarking (default: 20GB RAM, 12 hours, 16 CPUs)
+- `truvari_benchmarking`: For Truvari SV benchmarking (default: 96GB RAM, 4 hours, 16 CPUs)
 
-You can customize these in [config.yaml](config.yaml) to match your cluster's requirements and file sizes.
+You can customize these in `config/config.yaml` to match your cluster's requirements and file sizes.
+
+**GIAB Benchmarking Configuration**: The following settings control automatic GIAB sample detection and benchmarking:
+
+```yaml
+# File suffix used to identify SNV/Indel VCFs for hap.py
+happy_vcf_suffix: "snv_indels.vcf.gz"
+
+# File suffix used to identify SV VCFs for Truvari
+truvari_vcf_suffix: "svdb_merged.vcf.gz"
+
+# Container images
+happy:
+  container: "docker://hydragenetics/hap.py:0.3.15"
+
+truvari:
+  container: "docker://quay.io/biocontainers/truvari:5.3.0--pyhdfd78af_0"
+  # Optional: override Truvari bench parameters (Truvari defaults shown)
+  # refdist: 500
+  # pctseq: 0.7
+  # pctsize: 0.7
+  # pctovl: 0.0
+  # pick: single
+  # bnddist: 100
+  # chunksize: 1000
+  # max_resolve: 25000
+  # typeignore: false
+  # no_roll: false
+  # dup_to_ins: false
+  # no_decompose: false
+```
 
 ### 4. Run Validation
 
@@ -106,18 +150,29 @@ You can customize these in [config.yaml](config.yaml) to match your cluster's re
 # Dry run to check workflow
 snakemake -n --configfiles config/config.yaml config/config_${pipeline}.yaml
 
-# Run locally 
-snakemake  --configfiles config/config.yaml config/config_${pipeline}.yaml--use-singularity --singularity-args "--bind $(pwd)" --keep-going -j 2
+# Run locally
+snakemake --configfiles config/config.yaml config/config_${pipeline}.yaml \
+  --use-singularity --singularity-args "--bind $(pwd)" --keep-going -j 2
 
 # Run on SLURM cluster using the provided profile
 # (executor: slurm, singularity settings, and keep-going are specified in profiles/slurm/config.yaml)
 snakemake --profile profiles/slurm --configfiles config/config.yaml config/config_${pipeline}.yaml
 
+# Run only the GIAB hap.py benchmarking
+snakemake run_happy_benchmarking --profile profiles/slurm \
+  --configfiles config/config.yaml config/config_${pipeline}.yaml
+
+# Run only the GIAB Truvari SV benchmarking
+snakemake run_truvari_benchmarking --profile profiles/slurm \
+  --configfiles config/config.yaml config/config_${pipeline}.yaml
+
 # Generate a new md5sum tsv file from a directory of results (checksum generation mode)
-snakemake create_validation_data --configfiles config/config.yaml config/config_${pipeline}.yaml --use-singularity --singularity-args "--bind $(pwd)" 
+snakemake create_validation_data --configfiles config/config.yaml config/config_${pipeline}.yaml \
+  --use-singularity --singularity-args "--bind $(pwd)"
 
 # Generate a new md5sum tsv file instead of validating on SLURM
-snakemake create_validation_data --profile profiles/slurm --configfiles config/config.yaml config/config_${pipeline}.yaml
+snakemake create_validation_data --profile profiles/slurm \
+  --configfiles config/config.yaml config/config_${pipeline}.yaml
 ```
 
 **Note on `create_validation_data`**: This target generates new checksums for the files listed in your input TSV, rather than validating against existing checksums. Use this when:
@@ -198,10 +253,55 @@ FAILED FILES:
 ```
 
 ### `create_validation_data` Workflow Output
-- `validatiion_results/new_validation_data.tsv`: New validation data file with calculated checksums
+- `validation_results/new_validation_data.tsv`: New validation data file with calculated checksums
 - `checksums/{file}.checksum`: Individual checksum files for each processed file
 
 The `new_validation_data.tsv` file can be used as input for subsequent validation runs by copying it to your input file (e.g., `test_input.tsv`).
+
+### GIAB Benchmarking Output
+
+Benchmarking runs automatically when a GIAB sample is detected in the input TSV. Each sample gets its own output directory named after the sample identifier found in the file path.
+
+#### hap.py SNV/Indel Benchmarking
+
+Triggered when any input file path contains `HG001`, `NA12878`, `HM12878`, `HG002`, `NA24385`, or `HM24385` **and** the file ends with `happy_vcf_suffix` (default: `snv_indels.vcf.gz`).
+
+```
+results/
+└── happy_{sample}/
+    ├── {sample}_happy.out.summary.csv   # Per-type precision/recall/F1 summary
+    └── {sample}_happy.out/             # Full hap.py output directory
+        ├── {sample}_happy.out.vcf.gz   # Annotated VCF
+        └── ...                         # Stratification results
+```
+
+The truth sets used are GIAB NIST v4.2.1:
+- **HG001**: `HG001_GRCh38_1_22_v4.2.1_benchmark.vcf.gz`
+- **HG002**: `HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz`
+
+#### Truvari SV Benchmarking
+
+Triggered when any input file path contains `HG002`, `NA24385`, or `HM24385` **and** the file ends with `truvari_vcf_suffix` (default: `svdb_merged.vcf.gz`). Currently only HG002 truth sets are available.
+
+```
+results/
+└── truvari_{sample}/
+    ├── ga4gh_with_refine.size_stratified.accuracy.stats.txt  # Size-stratified summary
+    └── truvari_t2t_result/                                   # Full Truvari output directory
+        ├── ga4gh_with_refine.base.vcf.gz                     # GA4GH-labelled truth VCF
+        ├── ga4gh_with_refine.comp.vcf.gz                     # GA4GH-labelled query VCF
+        └── ...                                               # bench/refine working files
+```
+
+The Truvari pipeline runs three steps:
+1. `truvari bench` — compares the query SV VCF against the GIAB T2T HG002 truth set
+2. `truvari refine` — sequence-resolves candidate regions using MAFFT
+3. `truvari ga4gh` — converts results to GA4GH format for standardised reporting
+
+The truth set used is the GIAB T2T draft benchmark:
+- `GRCh38_HG2-T2TQ100-V1.1_stvar.vcf.gz` (autosomes only, SVTYPE-filtered)
+
+The size-stratified summary (`*.accuracy.stats.txt`) reports precision, recall and F1 for all SVs and broken down by size bins and variant type (DEL/INS).
 
 ## Validation Logic
 
