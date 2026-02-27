@@ -46,7 +46,7 @@ TRUVARI_SAMPLES = {}
 for f in FILES_AND_CHECKSUMS.keys():
     # Check for happy benchmarking samples
     if f.endswith(happy_vcf_suffix):
-        if any(name in f for name in ["HG001", "NA12878", "HM12878"]):
+        if any(name in f for name in ["HG001", "NA12878", "HM12878", "HG002", "NA24385", "HM24385"]):
             sample = get_sample_name(f, happy_vcf_suffix)
             HAPPY_SAMPLES[sample] = f
             happy_targets.append(f"{PUBLISH_DIR}/happy_{sample}/{sample}_happy.out.summary.csv")
@@ -205,4 +205,10 @@ rule run_happy_benchmarking:
 # Target rule for running only truvari benchmarking
 rule run_truvari_benchmarking:
     input:
+        truvari_targets
+
+# Target rule for running only bap.py and truvari benchmarking on giab samples
+rule run_giab_benchmarking:
+    input:
+        happy_targets,
         truvari_targets
