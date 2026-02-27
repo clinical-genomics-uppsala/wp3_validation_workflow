@@ -27,6 +27,7 @@ wp3_validation_workflow/
 ├── requirements.txt             # Python dependencies
 ├── config/
 │   ├── config.yaml             # Base configuration
+│   ├── resources.yaml          # Resource requirements (mem, runtime, CPUs per rule type)
 │   └── config_<pipeline>.yaml  # Pipeline-specific configuration
 ├── profiles/
 │   └── slurm/                  # SLURM executor profile
@@ -64,29 +65,31 @@ pip install -r requirements.txt
 
 Create a tab-separated file (`test_input.tsv`) with columns:
 - `file`: Path to the file to validate
-- `checksum`: Expected MD5 checksum
+- `checksum`: Expected MD5 checksum *(optional — rows without a checksum are still used as inputs to benchmarking rules but are skipped for checksum validation)*
 
 Example:
 ```
 file	checksum
 data/sample.vcf	d41d8cd98f00b204e9800998ecf8427e
 results/sample.T.bam	e3b0c44298fc1c149afbf4c8996fb924
+results/HG002.snv_indels.vcf.gz
+results/HG002.svdb_merged.vcf.gz
 ```
 
 #### For `create_validation_data` Workflow
 
-When using the `create_validation_data` target to generate new checksums, the input file format is the same, but the `checksum` column values are ignored (can be placeholder values). The workflow will:
+When using the `create_validation_data` target to generate new checksums, the `checksum` column is optional. The workflow will:
 
 1. Read the `file` column to identify which files to process
 2. Generate new checksums for each file using the same logic as validation
-3. Output a new TSV file (`results/new_validation_data.tsv`) with updated checksums
+3. Output a new TSV file (`validation_results/new_validation_data.tsv`) with updated checksums
 
 Example input for checksum generation:
 ```
-file	checksum
-data/sample.vcf	PLACEHOLDER
-results/sample.T.bam	PLACEHOLDER
-metrics/sample.alignment_summary_metrics.txt	PLACEHOLDER
+file
+data/sample.vcf
+results/sample.T.bam
+metrics/sample.alignment_summary_metrics.txt
 ```
 
 The generated output will contain the actual calculated checksums:
@@ -123,11 +126,16 @@ happy_vcf_suffix: "snv_indels.vcf.gz"
 # File suffix used to identify SV VCFs for Truvari
 truvari_vcf_suffix: "svdb_merged.vcf.gz"
 
-# Container images
-happy:
-  container: "docker://hydragenetics/hap.py:0.3.15"
+# Path to reference genome FASTA (required for benchmarking)
+reference_genome: "/path/to/GRCh38.fasta"
 
-truvari:
+# Container images
+happy_benchmarking:
+  container: "docker://hydragenetics/hap.py:0.3.15"
+  # Optional: path to a pre-built RTG SDF template for vcfeval (avoids rebuilding on every run)
+  # vcfeval_template: "/path/to/reference.sdf"
+
+truvari_benchmarking:
   container: "docker://quay.io/biocontainers/truvari:5.3.0--pyhdfd78af_0"
   # Optional: override Truvari bench parameters (Truvari defaults shown)
   # refdist: 500
@@ -166,6 +174,10 @@ snakemake run_happy_benchmarking --profile profiles/slurm \
 snakemake run_truvari_benchmarking --profile profiles/slurm \
   --configfiles config/config.yaml config/config_${pipeline}.yaml
 
+# Run both hap.py and Truvari GIAB benchmarking together
+snakemake run_giab_benchmarking --profile profiles/slurm \
+  --configfiles config/config.yaml config/config_${pipeline}.yaml
+
 # Generate a new md5sum tsv file from a directory of results (checksum generation mode)
 snakemake create_validation_data --configfiles config/config.yaml config/config_${pipeline}.yaml \
   --use-singularity --singularity-args "--bind $(pwd)"
@@ -190,7 +202,7 @@ The pipeline includes a SLURM profile for cluster execution:
 - **Profile location**: `profiles/slurm/`
 - **Configuration**: Edit `profiles/slurm/config.yaml`
 - **Default resources**: 4GB RAM, 4 hour runtime, 1 CPU per job
-- **Partition**: `low` (modify in `config.yaml` if needed)
+- **Partition**: `low_bkup` (modify in `profiles/slurm/config.yaml` if needed)
 
 To customize for your cluster:
 1. Edit `profiles/slurm/config.yaml` to set your partition in `default-resources`
@@ -212,12 +224,12 @@ resources:
 ### Validation Workflow Output
 
 #### Primary Result Files
-- **`results/validation_results.txt`**: Raw consolidated validation results
+- **`validation_results/validation_results.txt`**: Raw consolidated validation results
   - Contains concatenated contents of all individual validation files
   - Each line shows either "Validated: filename" or "Failed validation: filename: expected != calculated"
   - Useful for scripts and detailed programmatic analysis
   
-- **`results/validation_summary.txt`**: Human-readable validation summary report
+- **`validation_results/validation_summary.txt`**: Human-readable validation summary report
   - **SUMMARY section**: Shows total files processed, number passed/failed
   - **PASSED FILES section**: Lists all files that passed validation with ✓ marks
   - **FAILED FILES section**: Lists failed files with ✗ marks and detailed error messages
@@ -267,12 +279,25 @@ Benchmarking runs automatically when a GIAB sample is detected in the input TSV.
 Triggered when any input file path contains `HG001`, `NA12878`, `HM12878`, `HG002`, `NA24385`, or `HM24385` **and** the file ends with `happy_vcf_suffix` (default: `snv_indels.vcf.gz`).
 
 ```
-results/
+validation_results/
 └── happy_{sample}/
-    ├── {sample}_happy.out.summary.csv   # Per-type precision/recall/F1 summary
-    └── {sample}_happy.out/             # Full hap.py output directory
-        ├── {sample}_happy.out.vcf.gz   # Annotated VCF
-        └── ...                         # Stratification results
+    ├── {sample}_happy.out.summary.csv              # Per-type precision/recall/F1 summary
+    ├── {sample}_happy.out.extended.csv             # Extended per-region stats
+    ├── {sample}_happy.out.vcf.gz                   # Annotated VCF
+    ├── {sample}_happy.out.vcf.gz.tbi               # VCF index
+    ├── {sample}_happy.out.metrics.json.gz          # Run metrics
+    ├── {sample}_happy.out.runinfo.json             # Run info
+    ├── {sample}_happy.out.roc.all.csv.gz           # ROC curve (all variants)
+    ├── {sample}_happy.out.roc.Locations.INDEL.csv.gz
+    ├── {sample}_happy.out.roc.Locations.INDEL.PASS.csv.gz
+    ├── {sample}_happy.out.roc.Locations.SNP.csv.gz
+    └── {sample}_happy.out.roc.Locations.SNP.PASS.csv.gz
+```
+
+A shared RTG SDF index is built once from the reference FASTA and reused across all samples:
+```
+benchmark_happy/
+└── reference.sdf/   # RTG vcfeval template (built by build_vcfeval_template rule)
 ```
 
 The truth sets used are GIAB NIST v4.2.1:
@@ -281,16 +306,15 @@ The truth sets used are GIAB NIST v4.2.1:
 
 #### Truvari SV Benchmarking
 
-Triggered when any input file path contains `HG002`, `NA24385`, or `HM24385` **and** the file ends with `truvari_vcf_suffix` (default: `svdb_merged.vcf.gz`). Currently only HG002 truth sets are available.
+Triggered when any input file path contains `HG002`, `NA24385`, or `HM24385` **and** the file ends with `truvari_vcf_suffix` (default: `svs.vcf.gz`; set to `svdb_merged.vcf.gz` in `config/config.yaml`). Currently only HG002 truth sets are available.
 
 ```
-results/
+validation_results/
 └── truvari_{sample}/
     ├── ga4gh_with_refine.size_stratified.accuracy.stats.txt  # Size-stratified summary
-    └── truvari_t2t_result/                                   # Full Truvari output directory
-        ├── ga4gh_with_refine.base.vcf.gz                     # GA4GH-labelled truth VCF
-        ├── ga4gh_with_refine.comp.vcf.gz                     # GA4GH-labelled query VCF
-        └── ...                                               # bench/refine working files
+    ├── ga4gh_with_refine.base.vcf.gz                         # GA4GH-labelled truth VCF
+    ├── ga4gh_with_refine.comp.vcf.gz                         # GA4GH-labelled query VCF
+    └── ...                                                   # bench/refine working files
 ```
 
 The Truvari pipeline runs three steps:
