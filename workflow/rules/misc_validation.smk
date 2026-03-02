@@ -8,6 +8,8 @@ rule checksum_collection_of_files:
         "checksums/{file}.checksum"
     params:
         patterns=config.get("file_patterns", [])
+    log:
+        "logs/checksum_collection_of_files/{file}.log"
     resources:
         mem_mb=get_resource("misc_validation", "mem_mb", 4000),
         runtime=get_resource("misc_validation", "runtime", 20),
@@ -16,6 +18,7 @@ rule checksum_collection_of_files:
         config.get("default_container")
     shell:
         """
+        exec 2> {log}
         # Create checksum for files matching patterns
         md5=$(cat {input.file} | md5sum | awk '{{print($1)}}')
         echo $md5 > {output}
@@ -27,6 +30,8 @@ rule checksum_default:
         file=lambda wildcards: [f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file][0]
     output:
         "checksums/{file}.checksum"
+    log:
+        "logs/checksum_default/{file}.log"
     resources:
         mem_mb=get_resource("misc_validation", "mem_mb", 4000),
         runtime=get_resource("misc_validation", "runtime", 20),
@@ -35,6 +40,7 @@ rule checksum_default:
         config.get("default_container")
     shell:
         """
+        exec 2> {log}
         # Default checksum - simple file checksum
         md5=$(cat {input.file} | md5sum | awk '{{print($1)}}')
         echo $md5 > {output}
@@ -50,6 +56,8 @@ rule validate_collection_of_files:
     params:
         expected_checksum=lambda wildcards: FILES_AND_CHECKSUMS[[f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file][0]],
         patterns=config.get("file_patterns", [])
+    log:
+        "logs/validate_collection_of_files/{file}.log"
     resources:
         mem_mb=get_resource("misc_validation", "mem_mb", 4000),
         runtime=get_resource("misc_validation", "runtime", 20),
@@ -58,6 +66,7 @@ rule validate_collection_of_files:
         config.get("default_container")
     shell:
         """
+        exec 2> {log}
         calculated_md5=$(cat {input.checksum})
         
         if [ "$calculated_md5" = "{params.expected_checksum}" ]; then
@@ -76,6 +85,8 @@ rule validate_default:
         "validation/{file}.validated"
     params:
         expected_checksum=lambda wildcards: FILES_AND_CHECKSUMS[[f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file][0]]
+    log:
+        "logs/validate_default/{file}.log"
     resources:
         mem_mb=get_resource("misc_validation", "mem_mb", 4000),
         runtime=get_resource("misc_validation", "runtime", 20),
@@ -84,6 +95,7 @@ rule validate_default:
         config.get("default_container")
     shell:
         """
+        exec 2> {log}
         calculated_md5=$(cat {input.checksum})
         
         if [ "$calculated_md5" = "{params.expected_checksum}" ]; then

@@ -9,9 +9,17 @@ configfile: "config.yaml"
 INPUT_FILE = config.get("input", "test_input.tsv")
 PUBLISH_DIR = config.get("publish_dir", "results")
 
-# Read input file with file paths and checksums
+# Read input file with file paths and optional checksums
 input_df = pd.read_csv(INPUT_FILE, sep='\t')
+if 'checksum' not in input_df.columns:
+    input_df['checksum'] = None
+else:
+    input_df['checksum'] = input_df['checksum'].where(input_df['checksum'].notna(), None)
+
+# All files (used for path lookups and benchmarking sample discovery)
 FILES_AND_CHECKSUMS = dict(zip(input_df['file'], input_df['checksum']))
+# Only files with a checksum (used for validation targets)
+FILES_WITH_CHECKSUMS = {f: c for f, c in FILES_AND_CHECKSUMS.items() if c and str(c).strip()}
 
 # Include rule files
 include: "rules/common.smk"
@@ -19,21 +27,50 @@ include: "rules/vcf_validation.smk"
 include: "rules/metrics_validation.smk" 
 include: "rules/bam_validation.smk"
 include: "rules/misc_validation.smk"
+include: "rules/happy_benchmarking.smk"
+include: "rules/truvari_benchmarking.smk"
 
 # Rule order to resolve ambiguous rules - prioritize specific rules over general ones
 ruleorder: checksum_vcf_gz > checksum_dna_cram > checksum_metrics > checksum_multiqc > checksum_samtools_stats > checksum_collection_of_files > checksum_default > validate_vcf_gz > validate_dna_cram > validate_metrics > validate_multiqc > validate_samtools_stats > validate_collection_of_files > validate_default
 
-# Target rule
+# Determine which happy benchmarking targets to include based on input files
+happy_targets = []
+happy_vcf_suffix = config.get("happy_vcf_suffix", "snv_indels.vcf.gz")
+HAPPY_SAMPLES = {}
+
+# Determine which truvari benchmarking targets to include based on input files
+truvari_targets = []
+truvari_vcf_suffix = config.get("truvari_vcf_suffix", "svs.vcf.gz")
+TRUVARI_SAMPLES = {}
+
+for f in FILES_AND_CHECKSUMS.keys():
+    # Check for happy benchmarking samples
+    if f.endswith(happy_vcf_suffix):
+        if any(name in f for name in ["HG001", "NA12878", "HM12878", "HG002", "NA24385", "HM24385"]):
+            sample = get_sample_name(f, happy_vcf_suffix)
+            HAPPY_SAMPLES[sample] = f
+            happy_targets.append(f"{PUBLISH_DIR}/happy_{sample}/{sample}_happy.out.summary.csv")
+            
+    # Check for truvari benchmarking samples
+    if f.endswith(truvari_vcf_suffix):
+        if any(name in f for name in ["HG002", "NA24385", "HM24385"]):
+            sample = get_sample_name(f, truvari_vcf_suffix)
+            TRUVARI_SAMPLES[sample] = f
+            truvari_targets.append(f"{PUBLISH_DIR}/truvari_{sample}/ga4gh_with_refine.size_stratified.accuracy.stats.txt")
+
+# Target rule. to run the entire workflow including happy benchmarking if relevant files are present
 rule all:
     input:
         f"{PUBLISH_DIR}/validation_results.txt",
         f"{PUBLISH_DIR}/validation_summary.txt",
-        f"{PUBLISH_DIR}/.workflow_status"
+        f"{PUBLISH_DIR}/.workflow_status",
+        happy_targets,
+        truvari_targets
 
 # Collect all validation results
 rule collect_results:
     input:
-        expand("validation/{file}.validated", file=[Path(f).name for f in FILES_AND_CHECKSUMS.keys()])
+        expand("validation/{file}.validated", file=[Path(f).name for f in FILES_WITH_CHECKSUMS.keys()])
     output:
         f"{PUBLISH_DIR}/validation_results.txt"
     resources:
@@ -48,11 +85,11 @@ rule collect_results:
 # Create validation summary report showing pass/fail status
 rule validation_summary:
     input:
-        expand("validation/{file}.validated", file=[Path(f).name for f in FILES_AND_CHECKSUMS.keys()])
+        expand("validation/{file}.validated", file=[Path(f).name for f in FILES_WITH_CHECKSUMS.keys()])
     output:
         f"{PUBLISH_DIR}/validation_summary.txt"
     params:
-        expected_files=[Path(f).name for f in FILES_AND_CHECKSUMS.keys()]
+        expected_files=[Path(f).name for f in FILES_WITH_CHECKSUMS.keys()]
     resources:
         mem_mb=get_resource("summary_tasks", "mem_mb", 2000),
         runtime=get_resource("summary_tasks", "runtime", 10),
@@ -141,7 +178,7 @@ rule check_workflow_status:
 # Rule to create validation data (checksums) instead of validating
 rule create_validation_data:
     input:
-        expand("checksums/{file}.checksum", file=[Path(f).name for f in FILES_AND_CHECKSUMS.keys()])
+        expand("checksums/{file}.checksum", file=[Path(f).name for f in FILES_WITH_CHECKSUMS.keys()])
     output:
         f"{PUBLISH_DIR}/new_validation_data.tsv"
     resources:
@@ -151,10 +188,27 @@ rule create_validation_data:
     run:
         with open(output[0], 'w') as f:
             f.write("file\tchecksum\n")
-            for file_path in FILES_AND_CHECKSUMS.keys():
+            for file_path in FILES_WITH_CHECKSUMS.keys():
                 file_name = Path(file_path).name
                 checksum_file = f"checksums/{file_name}.checksum"
                 if Path(checksum_file).exists():
                     with open(checksum_file) as cf:
                         checksum = cf.read().strip()
                         f.write(f"{file_path}\t{checksum}\n")
+
+
+# Target rule for running only happy benchmarking
+rule run_happy_benchmarking:
+    input:
+        happy_targets
+
+# Target rule for running only truvari benchmarking
+rule run_truvari_benchmarking:
+    input:
+        truvari_targets
+
+# Target rule for running only bap.py and truvari benchmarking on giab samples
+rule run_giab_benchmarking:
+    input:
+        happy_targets,
+        truvari_targets

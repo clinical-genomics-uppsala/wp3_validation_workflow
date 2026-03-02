@@ -48,3 +48,26 @@ def get_bam_file(wildcards):
                 return f
     # If no BAM/CRAM/SAM file matches, raise an error
     raise ValueError(f"No BAM/CRAM/SAM file found for {wildcards.file}")
+
+def get_sample_name(file_path, suffix):
+    name = Path(file_path).name
+    if name == suffix:
+        return Path(file_path).parent.name
+    if name.endswith(suffix):
+        name = name[:-len(suffix)]
+    return name.strip("._-")
+
+def get_happy_truth_vcf(wildcards):
+    if any(name in wildcards.sample for name in ["HG001", "NA12878", "HM12878"]):
+        return "benchmark_happy/HG001_GRCh38_1_22_v4.2.1_benchmark.vcf.gz"
+    return "benchmark_happy/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz"
+
+def get_happy_truth_tbi(wildcards):
+    if any(name in wildcards.sample for name in ["HG001", "NA12878", "HM12878"]):
+        return "benchmark_happy/HG001_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi"
+    return "benchmark_happy/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi"
+
+def get_happy_truth_bed(wildcards):
+    if any(name in wildcards.sample for name in ["HG001", "NA12878", "HM12878"]):
+        return "benchmark_happy/HG001_GRCh38_1_22_v4.2.1_benchmark.bed"
+    return "benchmark_happy/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed"

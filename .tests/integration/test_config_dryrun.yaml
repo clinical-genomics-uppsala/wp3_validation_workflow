@@ -1,0 +1,58 @@
+# Dry-run test configuration
+# Files listed in the input TSV do not need to exist for a dry run;
+# Snakemake only resolves the DAG without executing any jobs.
+
+input: ".tests/integration/test_input_dryrun.tsv"
+publish_dir: ".tests/integration/results_dryrun"
+
+default_container: "docker://hydragenetics/common:3.1.1"
+
+happy:
+  container: "docker://hydragenetics/hap.py:0.3.15"
+
+truvari:
+  container: "docker://quay.io/biocontainers/truvari:5.3.0--pyhdfd78af_0"
+
+# Suffixes used to detect benchmarking VCFs from the input TSV
+happy_vcf_suffix: "snv_indels.vcf.gz"
+truvari_vcf_suffix: "svdb_merged.vcf.gz"
+
+# Placeholder - not used during dry run
+reference_genome: "/path/to/GRCh38.fa"
+
+# Reduced resource requirements (only used for display in dry-run output)
+resources:
+  vcf_validation:
+    mem_mb: 1000
+    runtime: 10
+    cpus_per_task: 1
+
+  bam_validation:
+    mem_mb: 1000
+    runtime: 10
+    cpus_per_task: 1
+
+  metrics_validation:
+    mem_mb: 500
+    runtime: 5
+    cpus_per_task: 1
+
+  misc_validation:
+    mem_mb: 500
+    runtime: 5
+    cpus_per_task: 1
+
+  summary_tasks:
+    mem_mb: 500
+    runtime: 5
+    cpus_per_task: 1
+
+  happy_benchmarking:
+    mem_mb: 1000
+    runtime: 10
+    cpus_per_task: 1
+
+  truvari_benchmarking:
+    mem_mb: 1000
+    runtime: 10
+    cpus_per_task: 1
