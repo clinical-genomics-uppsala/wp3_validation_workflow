@@ -2,8 +2,6 @@ import pandas as pd
 from pathlib import Path
 import re
 
-# Configuration
-configfile: "config.yaml"
 
 # Default parameters
 INPUT_FILE = config.get("input", "test_input.tsv")
