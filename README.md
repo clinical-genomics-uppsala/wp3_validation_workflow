@@ -16,7 +16,7 @@ Validate the output files from CGUs WP3 pipelines. This is used to track changes
   - [Validation Workflow Output](#validation-workflow-output)
   - [`create_validation_data` Workflow Output](#create_validation_data-workflow-output)
 - [Validation Logic](#validation-logic)
-- [GIAB Benchmarking](#giab-benchmarking)
+- [Variant Calls Benchmarking](#giab-benchmarking)
   - [Supported Samples](#supported-samples)
   - [Automatic Detection](#automatic-detection)
   - [Configuration](#configuration)
