@@ -1,5 +1,3 @@
-# Truvari benchmarking rules for SVs
-
 # Rule to download benchmarking files for HG002 SVs
 rule get_truvari_benchmark_files:
     output:
@@ -41,7 +39,6 @@ rule prepare_truvari_benchmark_files:
         """
 
 
-# Rule to run truvari benchmarking for a given sample
 rule run_truvari_benchmarking_sample:
     input:
         vcf=lambda wildcards: TRUVARI_SAMPLES[wildcards.sample],
@@ -58,6 +55,7 @@ rule run_truvari_benchmarking_sample:
         pctseq=config.get("truvari_benchmarking", {}).get("pctseq", 0.7),
         pctsize=config.get("truvari_benchmarking", {}).get("pctsize", 0.7),
         pctovl=config.get("truvari_benchmarking", {}).get("pctovl", 0.0),
+        passonly="--passonly" if config.get("truvari_benchmarking", {}).get("passonly", False) else "",
         typeignore="--typeignore" if config.get("truvari_benchmarking", {}).get("typeignore", False) else "",
         no_roll="--no-roll" if config.get("truvari_benchmarking", {}).get("no_roll", False) else "",
         pick=config.get("truvari_benchmarking", {}).get("pick", "single"),
@@ -91,7 +89,6 @@ rule run_truvari_benchmarking_sample:
             --base {input.bench_vcf} \
             --comp {input.vcf} \
             --output {params.out_dir} \
-            --passonly \
             --refdist {params.refdist} \
             --pctseq {params.pctseq} \
             --pctsize {params.pctsize} \
@@ -103,6 +100,7 @@ rule run_truvari_benchmarking_sample:
             {params.typeignore} \
             {params.no_roll} \
             {params.dup_to_ins} \
+            {params.passonly} \
             {params.no_decompose}
             
         # Step 2: Run refine
@@ -110,6 +108,7 @@ rule run_truvari_benchmarking_sample:
         truvari refine \
             --reference {params.ref_fasta} \
             --regions {params.out_dir}/candidate.refine.bed \
+            --coords R \
             --use-original-vcfs \
             --threads {resources.cpus_per_task} \
             --align mafft \
@@ -122,14 +121,19 @@ rule run_truvari_benchmarking_sample:
             --output $ga4gh_prefix 
         """
 
-# Rule to summarize truvari performance
 rule summarize_truvari_performance:
     input:
         base_vcf=f"{PUBLISH_DIR}/truvari_{{sample}}/ga4gh_with_refine.base.vcf.gz",
         comp_vcf=f"{PUBLISH_DIR}/truvari_{{sample}}/ga4gh_with_refine.comp.vcf.gz"
     output:
-        stats=f"{PUBLISH_DIR}/truvari_{{sample}}/ga4gh_with_refine.size_stratified.accuracy.stats.txt"
+        stats=f"{PUBLISH_DIR}/truvari_{{sample}}/ga4gh_with_refine.size_stratified.accuracy.stats.csv"
     log:
         "logs/summarize_truvari_performance/{sample}.log"
+    container:
+        config.get("truvari_benchmarking", {}).get("container", config["default_container"])
     script:
-        "../../scripts/process_truvari_ga4gh_vcfs.py"
+        "../scripts/process_truvari_ga4gh_vcfs.py"
+
+
+
+

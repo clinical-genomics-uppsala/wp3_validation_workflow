@@ -3,6 +3,7 @@
 ## This script is a modified version of the original script at https://github.com/PacificBiosciences/sawfish/blob/main/scripts/truvari_utils/process_truvari_ga4gh_vcfs.py
 ## Modifications include:
 ## - Added support for Snakemake's script: directive, allowing the script to be called  directly from a Snakemake rule with specified input and output files.
+##- Output to a .csv file with columns for SV type, size range, TP_base, TP_comp, FP, FN, TP_comp_bp, FP_bp, FN_bp, Precision, Recall, and F1 score.
 
 import os, sys
 
@@ -169,9 +170,11 @@ class TruthStats:
                 self.fp += 1
                 self.fp_len += size
 
-    def report(self, fp):
-        fp.write("TP_base:  {} TP_comp: {} FP: {} FN: {}\n".format(self.tp_base, self.tp_comp, self.fp, self.fn))
-        fp.write("TP_comp_bp: {} FP_bp: {} FN_bp: {}\n".format(self.tp_len, self.fp_len, self.fn_len))
+    def report(self, fp, indel_type='indel', size_label='All'):
+        # if size_label is not None:
+        #     fp.write(f"Size {size_label} {indel_type} Stats:\n")
+        #fp.write("TP_base:  {} TP_comp: {} FP: {} FN: {}\n".format(self.tp_base, self.tp_comp, self.fp, self.fn))
+        #fp.write("TP_comp_bp: {} FP_bp: {} FN_bp: {}\n".format())
         r=safe_frac(self.tp_base, self.tp_base+self.fn)
         p=safe_frac(self.tp_comp, self.tp_comp+self.fp)
         if p is None or r is None :
@@ -184,9 +187,19 @@ class TruthStats:
                 return "N/A   ";
             else:
                 return f"{m:.4f}"
+            
+        precision_str = format_metric(p)
+        recall_str = format_metric(r)
+        f1_str = format_metric(f1)
 
-        fp.write("recall: {} prec: {} f1: {}\n".format(format_metric(r),format_metric(p),format_metric(f1)))
-        fp.write("\n")
+        # Quote size_label if it contains commas
+        if ',' in size_label:
+            size_label_formatted = f'"{size_label}"'
+        else:
+            size_label_formatted = size_label
+    
+        fp.write(f"{indel_type},{size_label_formatted},{self.tp_base},{self.tp_comp},{self.fp},{self.fn},{self.tp_len},{self.fp_len},{self.fn_len},{precision_str},{recall_str},{f1_str}\n")
+
 
 class SizeStratifiedTruthStats:
     def __init__(self, depth_cuts):
@@ -196,9 +209,15 @@ class SizeStratifiedTruthStats:
         self.del_depth_stats = [TruthStats() for _ in range(len(depth_cuts))]
         self.indel_depth_stats = [TruthStats() for _ in range(len(depth_cuts))]
         self.total_stats = TruthStats()
+        self.total_del_stats = TruthStats()
+        self.total_ins_stats = TruthStats()
 
     def update(self, size, type, bd, is_truth):
         self.total_stats.update(bd, is_truth, size)
+        if type == SVType.DEL:
+            self.total_del_stats.update(bd, is_truth, size)
+        elif type == SVType.INS:
+            self.total_ins_stats.update(bd, is_truth, size)
 
         def update_indel_bins(i, size, bd, is_truth):
             self.indel_depth_stats[i].update(bd, is_truth, size)
@@ -217,16 +236,14 @@ class SizeStratifiedTruthStats:
         update_indel_bins(-1, size, bd, is_truth)
 
     def report(self, fp):
-        fp.write("Total Stats:\n")
-        self.total_stats.report(fp)
+        fp.write("SV-type,size-range,TP_base,TP_comp,FP,FN,TP_comp_bp,FP_bp,FN_bp,Precision,Recall,F1\n")
+        self.total_stats.report(fp, 'Indel', 'All')
+        self.total_del_stats.report(fp, 'DEL', 'All')
+        self.total_ins_stats.report(fp, 'INS', 'All')
 
         def write_size_results(i, size_label):
-            fp.write(f"Size {size_label} INDEL Stats:\n")
-            self.indel_depth_stats[i].report(fp)
-            fp.write(f"Size {size_label} DEL Stats:\n")
-            self.del_depth_stats[i].report(fp)
-            fp.write(f"Size {size_label} INS Stats:\n")
-            self.ins_depth_stats[i].report(fp)
+            self.del_depth_stats[i].report(fp, 'DEL', size_label=size_label)
+            self.ins_depth_stats[i].report(fp, 'INS', size_label=size_label)
 
         for i in range(len(self.depth_cuts)-1):
             cut0=self.depth_cuts[i]
@@ -237,6 +254,8 @@ class SizeStratifiedTruthStats:
         final_cut=self.depth_cuts[-1]
         size_label=f"{final_cut}+"
         write_size_results(-1, size_label)
+    
+
 
 def main():
     args = get_args()
