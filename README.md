@@ -2,6 +2,31 @@
 
 Validate the output files from CGUs WP3 pipelines. This is used to track changes in pipeline results and to guard against any unexpected changes during pipeline updates.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [File Structure](#file-structure)
+- [Usage](#usage)
+  - [1. Setup Environment](#1-setup-environment)
+  - [2. Prepare Input File](#2-prepare-input-file)
+  - [3. Configure Workflow](#3-configure-workflow)
+  - [4. Run Validation](#4-run-validation)
+  - [5. SLURM Cluster Usage](#5-slurm-cluster-usage)
+- [Output](#output)
+  - [Validation Workflow Output](#validation-workflow-output)
+  - [`create_validation_data` Workflow Output](#create_validation_data-workflow-output)
+- [Validation Logic](#validation-logic)
+- [GIAB Benchmarking](#giab-benchmarking)
+  - [Supported Samples](#supported-samples)
+  - [Automatic Detection](#automatic-detection)
+  - [Configuration](#configuration)
+  - [Benchmarking Outputs](#benchmarking-outputs)
+  - [Running Benchmarking](#running-benchmarking)
+  - [Containers](#containers)
+  - [Troubleshooting](#troubleshooting)
+- [File Type Detection](#file-type-detection)
+- [Error Handling](#error-handling)
+
 ## Overview
 
 The pipeline validates various bioinformatics file types by calculating checksums and comparing them to expected values. It supports:
@@ -13,12 +38,8 @@ The pipeline validates various bioinformatics file types by calculating checksum
 - Samtools stats files
 - Various other file types
 
-In addition, when **Genome in a Bottle (GIAB)** control samples are detected in the input TSV, the workflow automatically runs accuracy benchmarking:
+In addition, when **Genome in a Bottle (GIAB)** control samples are detected in the input TSV, the workflow automatically runs accuracy benchmarking.
 
-- **SNV/Indel benchmarking** using [hap.py](https://github.com/Illumina/hap.py) against GIAB v4.2.1 truth sets for HG001 and/or HG002 (and their aliases NA12878, HM12878, NA24385, HM24385).
-- **Structural variant (SV) benchmarking** using [Truvari](https://github.com/ACEnglish/truvari) against the GIAB T2T HG002 SV truth set for HG002 samples.
-
-Multiple replicates of the same GIAB sample (e.g. `HM24385-1` and `HM24385-2`) are each benchmarked independently with results written to separate output directories.
 
 ## File Structure
 
@@ -270,63 +291,6 @@ FAILED FILES:
 
 The `new_validation_data.tsv` file can be used as input for subsequent validation runs by copying it to your input file (e.g., `test_input.tsv`).
 
-### GIAB Benchmarking Output
-
-Benchmarking runs automatically when a GIAB sample is detected in the input TSV. Each sample gets its own output directory named after the sample identifier found in the file path.
-
-#### hap.py SNV/Indel Benchmarking
-
-Triggered when any input file path contains `HG001`, `NA12878`, `HM12878`, `HG002`, `NA24385`, or `HM24385` **and** the file ends with `happy_vcf_suffix` (default: `snv_indels.vcf.gz`).
-
-```
-validation_results/
-└── happy_{sample}/
-    ├── {sample}_happy.out.summary.csv              # Per-type precision/recall/F1 summary
-    ├── {sample}_happy.out.extended.csv             # Extended per-region stats
-    ├── {sample}_happy.out.vcf.gz                   # Annotated VCF
-    ├── {sample}_happy.out.vcf.gz.tbi               # VCF index
-    ├── {sample}_happy.out.metrics.json.gz          # Run metrics
-    ├── {sample}_happy.out.runinfo.json             # Run info
-    ├── {sample}_happy.out.roc.all.csv.gz           # ROC curve (all variants)
-    ├── {sample}_happy.out.roc.Locations.INDEL.csv.gz
-    ├── {sample}_happy.out.roc.Locations.INDEL.PASS.csv.gz
-    ├── {sample}_happy.out.roc.Locations.SNP.csv.gz
-    └── {sample}_happy.out.roc.Locations.SNP.PASS.csv.gz
-```
-
-A shared RTG SDF index is built once from the reference FASTA and reused across all samples:
-```
-benchmark_happy/
-└── reference.sdf/   # RTG vcfeval template (built by build_vcfeval_template rule)
-```
-
-The truth sets used are GIAB NIST v4.2.1:
-- **HG001**: `HG001_GRCh38_1_22_v4.2.1_benchmark.vcf.gz`
-- **HG002**: `HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz`
-
-#### Truvari SV Benchmarking
-
-Triggered when any input file path contains `HG002`, `NA24385`, or `HM24385` **and** the file ends with `truvari_vcf_suffix` (default: `svs.vcf.gz`; set to `svdb_merged.vcf.gz` in `config/config.yaml`). Currently only HG002 truth sets are available.
-
-```
-validation_results/
-└── truvari_{sample}/
-    ├── ga4gh_with_refine.size_stratified.accuracy.stats.txt  # Size-stratified summary
-    ├── ga4gh_with_refine.base.vcf.gz                         # GA4GH-labelled truth VCF
-    ├── ga4gh_with_refine.comp.vcf.gz                         # GA4GH-labelled query VCF
-    └── ...                                                   # bench/refine working files
-```
-
-The Truvari pipeline runs three steps:
-1. `truvari bench` — compares the query SV VCF against the GIAB T2T HG002 truth set
-2. `truvari refine` — sequence-resolves candidate regions using MAFFT
-3. `truvari ga4gh` — converts results to GA4GH format for standardised reporting
-
-The truth set used is the GIAB T2T draft benchmark:
-- `GRCh38_HG2-T2TQ100-V1.1_stvar.vcf.gz` (autosomes only, SVTYPE-filtered)
-
-The size-stratified summary (`*.accuracy.stats.txt`) reports precision, recall and F1 for all SVs and broken down by size bins and variant type (DEL/INS).
-
 ## Validation Logic
 
 The pipeline replicates the exact validation logic from the Nextflow workflow:
@@ -336,6 +300,138 @@ The pipeline replicates the exact validation logic from the Nextflow workflow:
 3. **Metrics files**: Extracts content after "## METRICS" marker
 4. **MultiQC reports**: Normalizes timestamp and path information
 5. **Other files**: Direct MD5 checksum calculation
+
+## GIAB Benchmarking
+
+The workflow includes automatic benchmarking against GIAB (Genome in a Bottle) reference samples when VCF files from known GIAB samples are detected in the input. This provides standardized performance metrics for variant calling pipelines.
+
+### Supported Samples
+
+**For SNV/Indel Benchmarking (hap.py):**
+- HG001 / NA12878 (CEPH/Utah Female)
+- HG002 / NA24385 (Ashkenazi Trio Son)
+
+**For SV Benchmarking (Truvari):**
+- HG002 / NA24385 (Ashkenazi Trio Son)
+
+### GIAB benchmark sets and evaluation tools
+
+- **SNV/Indel benchmarking** using [hap.py](https://github.com/Illumina/hap.py) against GIAB v4.2.1 truth sets for HG001 and/or HG002 (and their aliases NA12878, HM12878, NA24385, HM24385).
+- **Structural variant (SV) benchmarking** using [Truvari](https://github.com/ACEnglish/truvari) against the GIAB T2T HG002 SV truth set for HG002 samples.
+
+### GIAB sample detection Detection
+
+Benchmarking is triggered automatically when:
+1. Input files contain GIAB sample identifiers (HG001, NA12878, HM12878, HG002, NA24385, HM24385)
+2. Files match the configured VCF suffix patterns:
+   - `happy_vcf_suffix`: For SNV/indel VCFs (default: `snv_indels.vcf.gz`)
+   - `truvari_vcf_suffix`: For SV VCFs (default: `svdb_merged.vcf.gz`)
+
+### Configuration
+
+Configure benchmarking in your pipeline specific config file:
+
+```yaml
+# Reference genome (required for benchmarking)
+reference_genome: "/path/to/GRCh38.fasta"
+
+# VCF file suffixes to identify benchmarking candidates
+happy_vcf_suffix: "_snvs_annotated_research.vcf.gz"
+truvari_vcf_suffix: "_svs_annotated_research.vcf.gz"
+
+# Happy benchmarking configuration
+happy_benchmarking:
+  container: "docker://hydragenetics/hap.py:0.3.15"
+
+# Truvari benchmarking configuration  
+truvari_benchmarking:
+  container: "docker://quay.io/biocontainers/truvari:5.3.0--pyhdfd78af_0"
+  refdist: 2000        # Reference distance threshold
+  pctseq: 0.7          # Percent sequence similarity
+  pctsize: 0.7         # Percent size similarity
+  pctovl: 0.0          # Percent reciprocal overlap
+  passonly: false      # Only compare PASS variants
+  chunksize: 5000      # Chunk size for parallelization
+
+# Benchmarking report container
+benchmarking_report:
+  container: "docker://hydragenetics/quarto:1.8.27"
+```
+
+### Benchmarking Outputs
+
+#### SNV/Indel Benchmarking (hap.py)
+Located in `{publish_dir}/happy_{sample}/`:
+- `{sample}_happy.out.summary.csv`: Summary statistics (precision, recall, F1-score)
+- `{sample}_happy.out.extended.csv`: Detailed per-variant type metrics
+- `{sample}_happy.out.metrics.json.gz`: Full metrics in JSON format
+- `{sample}_happy.out.vcf.gz`: Annotated comparison VCF
+- ROC curve data files for quality score analysis
+
+#### SV Benchmarking (Truvari)
+Located in `{publish_dir}/truvari_{sample}_{caller}/`:
+- `ga4gh_with_refine.size_stratified.accuracy.stats.txt`: Size-stratified SV metrics
+- `ga4gh_with_refine.base.vcf.gz`: Benchmark truth set with match annotations
+- `ga4gh_with_refine.comp.vcf.gz`: Query VCF with match annotations
+- Statistics for SV types: DEL, INS stratified by size ranges:
+  - [0,50): Small indels
+  - [50,500): Medium SVs
+  - [500,5000): Large SVs  
+  - 5000+: Very large SVs
+
+#### Benchmarking Report
+Located in `{publish_dir}/`:
+- `variant_benchmarking_report.html`: Combined HTML report with:
+  - Performance comparison across samples and SV callers
+  - Size-stratified metrics visualization
+  - Precision-Recall tradeoffs
+  - Interactive plots for detailed analysis
+
+### Running Benchmarking
+
+Benchmarking runs automatically as part of the main workflow when GIAB samples are detected:
+
+```bash
+# Dry run to see which benchmarking jobs will be triggered
+snakemake run_giab_benchmarking -n --configfiles config/config.yaml config/config_pipeline.yaml
+
+# Run with benchmarking and use SLURM for job submission
+snakemake  run_giab_benchmarking --profile profiles/slurm --configfiles config/config.yaml config/config_pipeline.yaml
+```
+
+The workflow will:
+1. Download GIAB reference data (truth VCFs and confident regions BED files)
+2. Create reference genome index files if needed
+3. Run hap.py for SNV/indel samples
+4. Run Truvari for SV samples
+5. Generate size-stratified statistics
+6. Render a combined HTML report (if Jupyter notebook template exists)
+
+### Containers
+
+The benchmarking workflow uses specialized containers:
+- **hap.py container**: Contains Illumina's hap.py tool for SNV/indel comparison
+- **Truvari container**: Contains Truvari toolkit for SV benchmarking
+- **Quarto container**: For rendering the final HTML report (requires working Quarto installation with deno runtime)
+
+**Important**: The quarto container must have a complete Quarto installation. If you encounter errors about missing deno, update the `benchmarking_report.container` to a container with a full Quarto setup (e.g., `docker://ghcr.io/quarto-dev/quarto:latest`).
+
+### Troubleshooting
+
+**No benchmarking jobs triggered:**
+- Check that sample names contain GIAB identifiers (case-sensitive)
+- Verify VCF file suffixes match `happy_vcf_suffix` or `truvari_vcf_suffix`
+- Ensure files are listed in the input TSV
+
+**Truvari benchmarking fails:**
+- Verify `reference_genome` is correctly configured
+- Check that reference FASTA is accessible and indexed
+- Review Truvari parameters for your data characteristics
+
+**Report rendering fails:**
+- Ensure the quarto container has a complete installation
+- Check that the notebook template exists
+- Verify all required statistics files were generated
 
 ## File Type Detection
 

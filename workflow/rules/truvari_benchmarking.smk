@@ -134,6 +134,3 @@ rule summarize_truvari_performance:
     script:
         "../scripts/process_truvari_ga4gh_vcfs.py"
 
-
-
-
