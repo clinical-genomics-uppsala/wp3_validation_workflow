@@ -46,10 +46,10 @@ rule run_truvari_benchmarking_sample:
         bench_tbi="benchmark_truvari/GRCh38_HG2-T2TQ100-V1.1_stvar.svtype.vcf.gz.tbi",
         bench_bed="benchmark_truvari/GRCh38_HG2-T2TQ100-V1.1_stvar.benchmark.only_autosomes.bed"
     output:
-        ga4gh_base=f"{PUBLISH_DIR}/truvari_{{sample}}/ga4gh_with_refine.base.vcf.gz",
-        ga4gh_comp=f"{PUBLISH_DIR}/truvari_{{sample}}/ga4gh_with_refine.comp.vcf.gz"
+        ga4gh_base=f"{TRUVARI_RESULTS_DIR}/truvari_{{sample}}/ga4gh_with_refine.base.vcf.gz",
+        ga4gh_comp=f"{TRUVARI_RESULTS_DIR}/truvari_{{sample}}/ga4gh_with_refine.comp.vcf.gz"
     params:
-        out_dir=f"{PUBLISH_DIR}/truvari_{{sample}}",
+        out_dir=f"{TRUVARI_RESULTS_DIR}/truvari_{{sample}}",
         ref_fasta=config.get("reference_genome", ""),
         refdist=config.get("truvari_benchmarking", {}).get("refdist", 500),
         pctseq=config.get("truvari_benchmarking", {}).get("pctseq", 0.7),
@@ -123,10 +123,10 @@ rule run_truvari_benchmarking_sample:
 
 rule summarize_truvari_performance:
     input:
-        base_vcf=f"{PUBLISH_DIR}/truvari_{{sample}}/ga4gh_with_refine.base.vcf.gz",
-        comp_vcf=f"{PUBLISH_DIR}/truvari_{{sample}}/ga4gh_with_refine.comp.vcf.gz"
+        base_vcf=f"{TRUVARI_RESULTS_DIR}/truvari_{{sample}}/ga4gh_with_refine.base.vcf.gz",
+        comp_vcf=f"{TRUVARI_RESULTS_DIR}/truvari_{{sample}}/ga4gh_with_refine.comp.vcf.gz"
     output:
-        stats=f"{PUBLISH_DIR}/truvari_{{sample}}/ga4gh_with_refine.size_stratified.accuracy.stats.csv"
+        stats=f"{TRUVARI_RESULTS_DIR}/truvari_{{sample}}/ga4gh_with_refine.size_stratified.accuracy.stats.csv"
     log:
         "logs/summarize_truvari_performance/{sample}.log"
     container:
