@@ -40,8 +40,7 @@ rule render_benchmarking_report:
         
         # Move output to final location
         mkdir -p "$OUT_DIR"
-        mv "$OUT_FILENAME" "$OUT_DIR"
-        mv 
+        mv "$OUT_FILENAME" "$OUT_DIR" 
         
         echo "Report generated: {output.html}" >&2
         """
