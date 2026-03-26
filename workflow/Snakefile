@@ -2,12 +2,14 @@ import pandas as pd
 from pathlib import Path
 import re
 
-# Configuration
-configfile: "config.yaml"
 
 # Default parameters
 INPUT_FILE = config.get("input", "test_input.tsv")
 PUBLISH_DIR = config.get("publish_dir", "results")
+
+# Separate directories for benchmarking results
+HAPPY_RESULTS_DIR = config.get("happy_results_dir", "happy_benchmarking_results")
+TRUVARI_RESULTS_DIR = config.get("truvari_results_dir", "truvari_benchmarking_results")
 
 # Read input file with file paths and optional checksums
 input_df = pd.read_csv(INPUT_FILE, sep='\t')
@@ -29,6 +31,7 @@ include: "rules/bam_validation.smk"
 include: "rules/misc_validation.smk"
 include: "rules/happy_benchmarking.smk"
 include: "rules/truvari_benchmarking.smk"
+include: "rules/report.smk"
 
 # Rule order to resolve ambiguous rules - prioritize specific rules over general ones
 ruleorder: checksum_vcf_gz > checksum_dna_cram > checksum_metrics > checksum_multiqc > checksum_samtools_stats > checksum_collection_of_files > checksum_default > validate_vcf_gz > validate_dna_cram > validate_metrics > validate_multiqc > validate_samtools_stats > validate_collection_of_files > validate_default
@@ -41,6 +44,15 @@ HAPPY_SAMPLES = {}
 # Determine which truvari benchmarking targets to include based on input files
 truvari_targets = []
 truvari_vcf_suffix = config.get("truvari_vcf_suffix", "svs.vcf.gz")
+# Support both single suffix (string) and multiple suffixes (list)
+if isinstance(truvari_vcf_suffix, str):
+    truvari_vcf_suffixes = [truvari_vcf_suffix]
+else:
+    truvari_vcf_suffixes = truvari_vcf_suffix
+
+# Get SV callers from config
+sv_callers = config.get('sv_callers', [])
+
 TRUVARI_SAMPLES = {}
 
 for f in FILES_AND_CHECKSUMS.keys():
@@ -49,14 +61,35 @@ for f in FILES_AND_CHECKSUMS.keys():
         if any(name in f for name in ["HG001", "NA12878", "HM12878", "HG002", "NA24385", "HM24385"]):
             sample = get_sample_name(f, happy_vcf_suffix)
             HAPPY_SAMPLES[sample] = f
-            happy_targets.append(f"{PUBLISH_DIR}/happy_{sample}/{sample}_happy.out.summary.csv")
+            happy_targets.append(f"{HAPPY_RESULTS_DIR}/happy_{sample}/{sample}_happy.out.summary.csv")
             
-    # Check for truvari benchmarking samples
-    if f.endswith(truvari_vcf_suffix):
-        if any(name in f for name in ["HG002", "NA24385", "HM24385"]):
-            sample = get_sample_name(f, truvari_vcf_suffix)
-            TRUVARI_SAMPLES[sample] = f
-            truvari_targets.append(f"{PUBLISH_DIR}/truvari_{sample}/ga4gh_with_refine.size_stratified.accuracy.stats.txt")
+    # Check for truvari benchmarking samples - check against all suffixes
+    for suffix in truvari_vcf_suffixes:
+        if f.endswith(suffix):
+            if any(name in f for name in ["HG002", "NA24385", "HM24385"]):
+                base_sample = get_sample_name(f, suffix)
+                
+                # Identify caller from suffix
+                caller_id = None
+                for caller in sv_callers:
+                    if caller in suffix.lower():
+                        caller_id = caller
+                        break
+                
+                # Construct sample name with caller: sample_caller (e.g., HM24385-1_sniffles)
+                if caller_id:
+                    sample = f"{base_sample}_{caller_id}"
+                else:
+                    sample = base_sample
+                
+                TRUVARI_SAMPLES[sample] = f
+                truvari_targets.append(f"{TRUVARI_RESULTS_DIR}/truvari_{sample}/ga4gh_with_refine.size_stratified.accuracy.stats.csv")
+                break  # Break after first match to avoid duplicate entries
+
+# Add comparison report if there are multiple Truvari samples
+if len(TRUVARI_SAMPLES) >= 1:
+    truvari_targets.append(f"{PUBLISH_DIR}/variant_benchmarking_report.html")
+
 
 # Target rule. to run the entire workflow including happy benchmarking if relevant files are present
 rule all:
@@ -65,7 +98,7 @@ rule all:
         f"{PUBLISH_DIR}/validation_summary.txt",
         f"{PUBLISH_DIR}/.workflow_status",
         happy_targets,
-        truvari_targets
+        truvari_targets,
 
 # Collect all validation results
 rule collect_results:
@@ -211,4 +244,5 @@ rule run_truvari_benchmarking:
 rule run_giab_benchmarking:
     input:
         happy_targets,
-        truvari_targets
+        truvari_targets,
+        f"{PUBLISH_DIR}/variant_benchmarking_report.html" if len(TRUVARI_SAMPLES) >= 1 else []

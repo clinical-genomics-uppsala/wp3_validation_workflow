@@ -19,7 +19,10 @@ happy_benchmarking:
 
 truvari_benchmarking:
   container: "docker://quay.io/biocontainers/truvari:5.3.0--pyhdfd78af_0"
-  
+
+benchmarking_report:
+  container: "docker://hydragenetics/quarto:1.8.27"
+
 
 # Rule-specific resource requirements
 resources:
