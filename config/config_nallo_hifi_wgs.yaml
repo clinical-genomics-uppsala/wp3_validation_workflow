@@ -1,17 +1,9 @@
 input: "pipeline_md5sums/nallo_hifi_wgs_md5sums.tsv"
 
-reference_genome: "/beegfs-storage/data/ref_genomes/GRCh38/GRCh38-GIABv3/GRCh38_GIABv3_no_alt_analysis_set_maskedGRC_decoys_MAP2K3_KMT2C_KCNJ18.fasta"
+reference_genome: "/beegfs-storage/data/ref_genomes/GRCh38/GRCmasked/GCA_000001405.15_GRCh38_no_alt_analysis_set_GRCmasked.fasta"
 happy_vcf_suffix: "_snvs_annotated_research.vcf.gz"
-# Truvari VCF suffix(es) - can be a single string or a list of strings
-truvari_vcf_suffix: 
-  - "_sniffles_svs.vcf.gz"
-  - "_sawfish_svs.vcf.gz"
-
-sv_callers:
-  - "sniffles"
-  - "sawfish"
+happy_vcf_suffix: "_svs_annotated_research.vcf.gz"
 
 truvari_benchmarking:
-    passonly: true
-    dup_to_ins: true
-    pick: "ac"
+  refdist: 2000
+  chunksize: 5000
