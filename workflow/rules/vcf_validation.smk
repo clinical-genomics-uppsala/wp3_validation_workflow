@@ -17,7 +17,7 @@ rule checksum_vcf_gz:
     container:
         config.get("default_container")
     script:
-        "../scripts/normalize_vcf_info.py"
+        "../scripts/compute_vcf_md5.py"
 
 # Validate compressed VCF files using pre-calculated checksums
 rule validate_vcf_gz:
