@@ -211,7 +211,7 @@ rule check_workflow_status:
 # Rule to create validation data (checksums) instead of validating
 rule create_validation_data:
     input:
-        expand("checksums/{file}.checksum", file=[Path(f).name for f in FILES_WITH_CHECKSUMS.keys()])
+        expand("checksums/{file}.checksum", file=[Path(f).name for f in FILES_AND_CHECKSUMS.keys()])
     output:
         f"{PUBLISH_DIR}/new_validation_data.tsv"
     resources:
