@@ -1,7 +1,7 @@
 
 rule render_benchmarking_report:
     input:
-        notebook="workflow/notebooks/benchmarking_report.ipynb",
+        notebook=config["render_benchmarking_report"]["notebook"],
         truvari_stats=lambda wildcards: [f"{TRUVARI_RESULTS_DIR}/truvari_{sample}/ga4gh_with_refine.size_stratified.accuracy.stats.csv" for sample in TRUVARI_SAMPLES],
         happy_stats=lambda wildcards: [f"{HAPPY_RESULTS_DIR}/happy_{sample}/{sample}_happy.out.extended.csv" for sample in HAPPY_SAMPLES]
     output:

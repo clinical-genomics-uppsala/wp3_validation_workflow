@@ -15,7 +15,7 @@ rule checksum_vcf_gz:
         runtime=get_resource("vcf_validation", "runtime", 30),
         cpus_per_task=get_resource("vcf_validation", "cpus_per_task", 1)
     container:
-        config.get("default_container")
+        config.get("checksum_vcf_gz", {}).get("container", "")
     script:
         "../scripts/compute_vcf_md5.py"
 

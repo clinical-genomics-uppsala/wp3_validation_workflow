@@ -221,7 +221,7 @@ rule create_validation_data:
     run:
         with open(output[0], 'w') as f:
             f.write("file\tchecksum\n")
-            for file_path in FILES_WITH_CHECKSUMS.keys():
+            for file_path in FILES_AND_CHECKSUMS.keys():
                 file_name = Path(file_path).name
                 checksum_file = f"checksums/{file_name}.checksum"
                 if Path(checksum_file).exists():
