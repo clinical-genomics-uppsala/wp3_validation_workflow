@@ -1,6 +1,7 @@
 import pandas as pd
 from pathlib import Path
 import re
+import sys
 
 
 # Default parameters
@@ -18,8 +19,40 @@ if 'checksum' not in input_df.columns:
 else:
     input_df['checksum'] = input_df['checksum'].where(input_df['checksum'].notna(), None)
 
-# All files (used for path lookups and benchmarking sample discovery)
-FILES_AND_CHECKSUMS = dict(zip(input_df['file'], input_df['checksum']))
+# All files from input (before filtering)
+ALL_INPUT_FILES = dict(zip(input_df['file'], input_df['checksum']))
+
+# Check which files actually exist on disk
+existing_files = {}
+missing_files = {}
+
+for file_path, checksum in ALL_INPUT_FILES.items():
+    if Path(file_path).exists():
+        existing_files[file_path] = checksum
+    else:
+        missing_files[file_path] = checksum
+
+# Log missing files
+if missing_files:
+    missing_log = Path(PUBLISH_DIR) / "missing_files.log"
+    missing_log.parent.mkdir(parents=True, exist_ok=True)
+    with open(missing_log, 'w') as f:
+        f.write("FILES NOT FOUND\n")
+        f.write("=" * 80 + "\n\n")
+        f.write(f"Total files in input TSV: {len(ALL_INPUT_FILES)}\n")
+        f.write(f"Files found: {len(existing_files)}\n")
+        f.write(f"Files missing: {len(missing_files)}\n\n")
+        f.write("Missing files:\n")
+        f.write("-" * 80 + "\n")
+        for file_path in sorted(missing_files.keys()):
+            f.write(f"{file_path}\n")
+    
+    print(f"WARNING: {len(missing_files)} files from input TSV not found on disk.", file=sys.stderr)
+    print(f"See {missing_log} for details.", file=sys.stderr)
+    print(f"Processing will continue with {len(existing_files)} existing files.", file=sys.stderr)
+
+# All files (used for path lookups and benchmarking sample discovery) - only existing files
+FILES_AND_CHECKSUMS = existing_files
 # Only files with a checksum (used for validation targets)
 FILES_WITH_CHECKSUMS = {f: c for f, c in FILES_AND_CHECKSUMS.items() if c and str(c).strip()}
 
@@ -122,7 +155,9 @@ rule validation_summary:
     output:
         f"{PUBLISH_DIR}/validation_summary.txt"
     params:
-        expected_files=[Path(f).name for f in FILES_WITH_CHECKSUMS.keys()]
+        expected_files=[Path(f).name for f in FILES_WITH_CHECKSUMS.keys()],
+        total_input_files=len(ALL_INPUT_FILES),
+        missing_count=len(missing_files)
     resources:
         mem_mb=get_resource("summary_tasks", "mem_mb", 2000),
         runtime=get_resource("summary_tasks", "runtime", 10),
@@ -132,6 +167,16 @@ rule validation_summary:
         echo "VALIDATION SUMMARY REPORT" > {output}
         echo "=========================" >> {output}
         echo "" >> {output}
+        
+        # Show input file statistics
+        if [ {params.missing_count} -gt 0 ]; then
+            echo "INPUT FILES:" >> {output}
+            echo "  Total files in input TSV: {params.total_input_files}" >> {output}
+            echo "  Files found: $(({params.total_input_files} - {params.missing_count}))" >> {output}
+            echo "  Files not found (skipped): {params.missing_count}" >> {output}
+            echo "  See {PUBLISH_DIR}/missing_files.log for details" >> {output}
+            echo "" >> {output}
+        fi
         
         # Count totals
         total_files=0
