@@ -199,6 +199,40 @@ class TestNormalizeInfo:
         info = "FOUND_IN=sawfish;HOMSEQ=ACCACCCCCC;set=Intersection"
         assert nvi.normalize_info(info) == info
 
+    def test_most_severe_consequence_is_normalized(self):
+        """most_severe_consequence key is recognized and its value sorted."""
+        info = "SVTYPE=INS;most_severe_consequence=HGNC:38034:C|downstream_gene_variant,HGNC:37102:C|upstream_gene_variant"
+        result = nvi.normalize_info(info)
+        # Entries should be sorted alphabetically
+        assert result == "SVTYPE=INS;most_severe_consequence=HGNC:37102:C|upstream_gene_variant,HGNC:38034:C|downstream_gene_variant"
+
+    def test_most_severe_consequence_order_independent(self):
+        """Two INFO strings with swapped most_severe_consequence entries normalize to the same."""
+        info1 = "most_severe_consequence=HGNC:38034:C|downstream_gene_variant,HGNC:37102:C|upstream_gene_variant"
+        info2 = "most_severe_consequence=HGNC:37102:C|upstream_gene_variant,HGNC:38034:C|downstream_gene_variant"
+        assert nvi.normalize_info(info1) == nvi.normalize_info(info2)
+
+    def test_skip_keys_removes_specified_fields(self):
+        """INFO keys in skip_keys are removed from output."""
+        info = "SVTYPE=INS;CSQ=A|mis|MOD;most_severe_consequence=HGNC:123"
+        result = nvi.normalize_info(info, skip_keys={"CSQ", "most_severe_consequence"})
+        assert result == "SVTYPE=INS"
+
+    def test_skip_keys_handles_missing_fields(self):
+        """skip_keys works even if the specified keys don't exist."""
+        info = "SVTYPE=INS;END=1000"
+        result = nvi.normalize_info(info, skip_keys={"CSQ", "most_severe_consequence"})
+        assert result == info
+
+    def test_skip_keys_preserves_other_fields(self):
+        """Fields not in skip_keys are preserved and normalized."""
+        info = "FOUND_IN=sawfish;CSQ=B|syn,A|mis;SVTYPE=INS"
+        result = nvi.normalize_info(info, skip_keys={"CSQ"})
+        # CSQ should be removed, but other fields remain
+        assert "CSQ" not in result
+        assert "FOUND_IN=sawfish" in result
+        assert "SVTYPE=INS" in result
+
 
 # ---------------------------------------------------------------------------
 # normalize_line
@@ -290,3 +324,34 @@ class TestComputeMd5:
         vcf_ms = make_bgzipped_vcf(tmp_path / "ms", [line_ms])
         vcf_sm = make_bgzipped_vcf(tmp_path / "sm", [line_sm])
         assert nvi.compute_md5(str(vcf_ms))[0] == nvi.compute_md5(str(vcf_sm))[0]
+
+    def test_most_severe_consequence_order_independent(self, tmp_path):
+        """Swapping most_severe_consequence entries produces the same MD5."""
+        base = "chr1\t100\t.\tA\tT\t.\tPASS\tmost_severe_consequence={msc}\tGT\t0/1"
+        line_12 = base.format(msc="HGNC:37102:C|upstream_gene_variant,HGNC:38034:C|downstream_gene_variant")
+        line_21 = base.format(msc="HGNC:38034:C|downstream_gene_variant,HGNC:37102:C|upstream_gene_variant")
+        vcf_12 = make_bgzipped_vcf(tmp_path / "msc12", [line_12])
+        vcf_21 = make_bgzipped_vcf(tmp_path / "msc21", [line_21])
+        assert nvi.compute_md5(str(vcf_12))[0] == nvi.compute_md5(str(vcf_21))[0]
+
+    def test_skip_keys_removes_fields_from_md5(self, tmp_path):
+        """VCFs with different CSQ values produce same MD5 when CSQ is skipped."""
+        base = "chr1\t100\t.\tA\tT\t.\tPASS\tSVTYPE=INS;CSQ={csq}\tGT\t0/1"
+        line_1 = base.format(csq="A|missense_variant|MODERATE|ENST001")
+        line_2 = base.format(csq="B|synonymous_variant|LOW|ENST002")
+        vcf_1 = make_bgzipped_vcf(tmp_path / "skip1", [line_1])
+        vcf_2 = make_bgzipped_vcf(tmp_path / "skip2", [line_2])
+        
+        # Without skipping, MD5s are different
+        assert nvi.compute_md5(str(vcf_1))[0] != nvi.compute_md5(str(vcf_2))[0]
+        
+        # With skipping CSQ, MD5s are the same
+        assert nvi.compute_md5(str(vcf_1), skip_keys={"CSQ"})[0] == nvi.compute_md5(str(vcf_2), skip_keys={"CSQ"})[0]
+
+    def test_skip_keys_handles_nonexistent_fields(self, tmp_path):
+        """skip_keys works even if the specified keys don't exist in the VCF."""
+        line = "chr1\t100\t.\tA\tT\t.\tPASS\tSVTYPE=INS\tGT\t0/1"
+        vcf = make_bgzipped_vcf(tmp_path / "nocsq", [line])
+        # Should not raise an error
+        digest, _ = nvi.compute_md5(str(vcf), skip_keys={"CSQ", "most_severe_consequence"})
+        assert len(digest) == 32

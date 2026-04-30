@@ -6,13 +6,14 @@ default_container: "docker://hydragenetics/common:3.1.1"
 
 resources_file: "config/resources.yaml"
 
-# Path to the reference genome FASTA (override in pipeline-specific config)
-# reference_genome: "/path/to/GRCh38.fasta"
-
 # Suffix for the VCF file to be used in happy benchmarking
 happy_vcf_suffix: "snv_indels.vcf.gz"
 truvari_vcf_suffix: "svdb_merged.vcf.gz"
 
+# Optional: INFO keys to skip when computing VCF MD5 checksums
+# Useful for fields that change between runs (e.g., annotation order)
+# Here we skip the CSQ field and the most_severe_consequence field, which can have order-dependent values that do not affect the underlying variant calls.
+skip_info_keys: ["CSQ", "most_severe_consequence"]
 
 happy_benchmarking:
   container: "docker://hydragenetics/hap.py:0.3.15"

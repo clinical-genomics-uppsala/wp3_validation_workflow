@@ -11,6 +11,9 @@ otherwise identical VCF files produce the same checksum:
        b. Pipe-delimited sub-fields are preserved; ampersand-delimited
           consequence terms *within* a sub-field are sorted and re-joined
           with '&' only (replacing any mixed '&'/'|' usage).
+  3. The most_severe_consequence field is normalized by sorting its
+     comma-separated entries alphabetically.
+  4. INFO keys specified in skip_info_keys are removed before hashing.
 """
 
 import gzip
@@ -42,6 +45,7 @@ log = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 VEP_KEYS = {"CSQ", "ANN"}
+SIMPLE_SORT_KEYS = {"most_severe_consequence"}
 DELIM_RE = re.compile(r"[&|]")
 
 
@@ -72,29 +76,54 @@ def normalize_vep_value(val: str) -> str:
     return ",".join(sorted(normalized))
 
 
-def normalize_info(info: str) -> str:
-    """Normalize all VEP keys found in a VCF INFO string."""
+def normalize_info(info: str, skip_keys: set[str] | None = None) -> str:
+    """Normalize all VEP keys and other sortable fields found in a VCF INFO string.
+    
+    Args:
+        info: The INFO field string
+        skip_keys: Set of INFO keys to exclude from the output
+    """
+    if skip_keys is None:
+        skip_keys = set()
+    
     parts = info.split(";")
     new_parts = []
     for part in parts:
         if "=" in part:
             key, _, val = part.partition("=")
+            # Skip keys that should be excluded
+            if key in skip_keys:
+                continue
             if key in VEP_KEYS:
                 part = f"{key}={normalize_vep_value(val)}"
+            elif key in SIMPLE_SORT_KEYS:
+                # Simple comma-separated sorting
+                sorted_val = ",".join(sorted(val.split(",")))
+                part = f"{key}={sorted_val}"
         new_parts.append(part)
     return ";".join(new_parts)
 
 
-def normalize_line(line: str) -> str:
-    """Normalize the INFO field of a single VCF data line (tab-delimited)."""
+def normalize_line(line: str, skip_keys: set[str] | None = None) -> str:
+    """Normalize the INFO field of a single VCF data line (tab-delimited).
+    
+    Args:
+        line: The VCF data line
+        skip_keys: Set of INFO keys to exclude from the output
+    """
     fields = line.split("\t")
     if len(fields) >= 8:
-        fields[7] = normalize_info(fields[7])
+        fields[7] = normalize_info(fields[7], skip_keys)
     return "\t".join(fields)
 
 
-def compute_md5(input_file: str) -> tuple[str, int]:
-    """Open a bgzipped VCF, normalize, and return (hex_digest, lines_hashed)."""
+def compute_md5(input_file: str, skip_keys: set[str] | None = None) -> tuple[str, int]:
+    """Open a bgzipped VCF, normalize, and return (hex_digest, lines_hashed).
+    
+    Args:
+        input_file: Path to the bgzipped VCF file
+        skip_keys: Set of INFO keys to exclude from hashing
+    """
     md5 = hashlib.md5()
     past_header = False
     lines_hashed = 0
@@ -110,7 +139,7 @@ def compute_md5(input_file: str) -> tuple[str, int]:
                     lines_hashed += 1
                 continue
 
-            normalized = normalize_line(line)
+            normalized = normalize_line(line, skip_keys)
             md5.update((normalized + "\n").encode())
             lines_hashed += 1
 
@@ -125,9 +154,16 @@ def main() -> None:
     _configure_logging(snakemake.log[0])  # noqa: F821
     input_file: str = snakemake.input.file  # noqa: F821
     output_file: str = snakemake.output[0]  # noqa: F821
+    
+    # Get skip_info_keys from config if specified
+    skip_keys_list = snakemake.config.get("skip_info_keys", [])  # noqa: F821
+    skip_keys = set(skip_keys_list) if skip_keys_list else None
+    
+    if skip_keys:
+        log.info("Skipping INFO keys: %s", ", ".join(sorted(skip_keys)))
 
     log.info("Computing MD5 for %s", input_file)
-    checksum, lines_hashed = compute_md5(input_file)
+    checksum, lines_hashed = compute_md5(input_file, skip_keys)
     log.info("Hashed %d lines → %s", lines_hashed, checksum)
 
     with open(output_file, "w") as out:
