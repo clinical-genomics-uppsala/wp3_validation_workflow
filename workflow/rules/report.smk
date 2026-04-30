@@ -19,8 +19,7 @@ rule render_benchmarking_report:
         exec 2> {log}
 
         OUT_FILENAME=$(basename {output.html})
-        OUT_DIR=$(realpath $(dirname {output.html}))
-        NOTEBOOK_ABS=$(realpath {input.notebook})
+        OUT_DIR=$(dirname {output.html})
         WORKFLOW_ROOT=$(pwd)
         
         # Create temporary directory for rendering
@@ -30,7 +29,7 @@ rule render_benchmarking_report:
         echo "Rendering to temporary location: $TEMP_OUT_DIR/$OUT_FILENAME" >&2
         
         # Copy notebook to temp directory and render there
-        cp "$NOTEBOOK_ABS" "$TEMP_OUT_DIR/report.ipynb"
+        cp {input.notebook} "$TEMP_OUT_DIR/report.ipynb"
         cd "$TEMP_OUT_DIR"
 
         quarto render report.ipynb \\
@@ -40,7 +39,7 @@ rule render_benchmarking_report:
         
         # Move output to final location
         mkdir -p "$OUT_DIR"
-        mv "$OUT_FILENAME" "$OUT_DIR" 
+        mv "$OUT_FILENAME" "$OUT_DIR/" 
         
         echo "Report generated: {output.html}" >&2
         """

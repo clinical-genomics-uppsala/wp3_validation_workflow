@@ -24,7 +24,7 @@ benchmarking_report:
   container: "docker://hydragenetics/quarto:1.8.27"
 
 render_benchmarking_report:
-  notebook: "/projects/wp3/Validering/pipelines/wp3_validation_workflow/workflow/notebooks/benchmarking_report.ipynb"
+  notebook: "workflow/notebooks/benchmarking_report.ipynb"
 
 resources:
   # VCF file processing (larger files may need more resources)
@@ -52,7 +52,7 @@ resources:
     cpus_per_task: 1
 
   render_benchmarking_report:
-    notebook: "/projects/wp3/Validering/pipelines/wp3_validation_workflow/workflow/notebooks/benchmarking_report.ipynb"  
+    notebook: "workflow/notebooks/benchmarking_report.ipynb"  
   
   # Summary and collection tasks 
   summary_tasks:
