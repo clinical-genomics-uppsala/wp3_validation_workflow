@@ -105,21 +105,39 @@ truvari_benchmarking:
   # no_decompose: false
 ```
 
-
 ## 4. Run Validation
 
+The documentation belows shows how to run the pipeline in general. A more concrete example of running it for a wp3 pipeline is given in [Validating WP3 Pipelines](validating_wp3_pipelines.md)
+
+### Create Validation tsv file
+When adding a new pipline the create_validation_data workflow can be run. In this case a custom pipeline congfig must also be created (config/config_${pipeline}.yaml).
+
 ```bash
-# Dry run to check workflow
-snakemake -n --configfiles config/config.yaml config/config_${pipeline}.yaml
+snakemake create_validation_data --profile profiles/slurm \
+  --configfiles config/config.yaml config/config_${pipeline}.yaml
+```
+**Note on `create_validation_data`**: This target generates new checksums for the files listed in your input TSV, rather than validating against existing checksums. Use this when:
+- Setting up validation data for the first time
+- Files have been updated and you need new reference checksums
+- Creating checksums for a new dataset
 
-# Run locally
-snakemake --configfiles config/config.yaml config/config_${pipeline}.yaml \
-  --use-singularity --singularity-args "--bind $(pwd)" --keep-going -j 2
+The workflow will create `results/new_validation_data.tsv` with the format needed for subsequent validation runs.
 
+### Validating results from a pipeline update
+
+Using the pipeline to validate the results of a pipeline update
+
+```bash
 # Run on SLURM cluster using the provided profile
 # (executor: slurm, singularity settings, and keep-going are specified in profiles/slurm/config.yaml)
 snakemake --profile profiles/slurm --configfiles config/config.yaml config/config_${pipeline}.yaml
+```
 
+### Running GIAB benchmarking only
+
+In some cases maybe only GIAB benchmarking need to be run:
+
+```bash
 # Run only the GIAB hap.py benchmarking
 snakemake run_happy_benchmarking --profile profiles/slurm \
   --configfiles config/config.yaml config/config_${pipeline}.yaml
@@ -131,23 +149,7 @@ snakemake run_truvari_benchmarking --profile profiles/slurm \
 # Run both hap.py and Truvari GIAB benchmarking together
 snakemake run_giab_benchmarking --profile profiles/slurm \
   --configfiles config/config.yaml config/config_${pipeline}.yaml
-
-# Generate a new md5sum tsv file from a directory of results (checksum generation mode)
-snakemake create_validation_data --configfiles config/config.yaml config/config_${pipeline}.yaml \
-  --use-singularity --singularity-args "--bind $(pwd)"
-
-# Generate a new md5sum tsv file instead of validating on SLURM
-snakemake create_validation_data --profile profiles/slurm \
-  --configfiles config/config.yaml config/config_${pipeline}.yaml
 ```
-
-**Note on `create_validation_data`**: This target generates new checksums for the files listed in your input TSV, rather than validating against existing checksums. Use this when:
-- Setting up validation data for the first time
-- Files have been updated and you need new reference checksums
-- Creating checksums for a new dataset
-
-The workflow will create `results/new_validation_data.tsv` with the format needed for subsequent validation runs.
-
 
 ## 5. SLURM Cluster Usage
 

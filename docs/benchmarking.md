@@ -21,8 +21,10 @@ The workflow includes automatic benchmarking against GIAB (Genome in a Bottle) r
 Benchmarking is triggered automatically when:
 1. Input files contain GIAB sample identifiers (HG001, NA12878, HM12878, HG002, NA24385, HM24385)
 2. Files match the configured VCF suffix patterns:
+For example:
    - `happy_vcf_suffix`: For SNV/indel VCFs (default: `snv_indels.vcf.gz`)
    - `truvari_vcf_suffix`: For SV VCFs (default: `svdb_merged.vcf.gz`)
+These suffices can be customised in the config file for the pipeline being validated. See documentation on Configuration in the next section.
 
 ## Configuration
 
@@ -110,8 +112,6 @@ The benchmarking workflow uses specialized containers:
 - **hap.py container**: Contains Illumina's hap.py tool for SNV/indel comparison
 - **Truvari container**: Contains Truvari toolkit for SV benchmarking
 - **Quarto container**: For rendering the final HTML report (requires working Quarto installation with deno runtime)
-
-**Important**: The quarto container must have a complete Quarto installation. If you encounter errors about missing deno, update the `benchmarking_report.container` to a container with a full Quarto setup (e.g., `docker://ghcr.io/quarto-dev/quarto:latest`).
 
 ## Troubleshooting
 
