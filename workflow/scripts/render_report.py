@@ -28,14 +28,31 @@ with open(log_file, 'w') as log:
         with open(f"{temp_dir}/config/config.yaml", 'w') as f:
             yaml.dump(dict(snakemake.config), f)
         
+        # Normalise input file lists (Snakemake can return str or list)
+        truvari_stats = snakemake.input.truvari_stats
+        happy_stats = snakemake.input.happy_stats
+        if isinstance(truvari_stats, str):
+            truvari_stats = [truvari_stats]
+        if isinstance(happy_stats, str):
+            happy_stats = [happy_stats]
+
         # Change to temp directory and render
+        # Note: do NOT pass --execute-dir here; Quarto will use temp_dir (the
+        # notebook location) as the execution directory, so config/config.yaml
+        # written above will be found by the notebook's standalone fallback.
         os.chdir(temp_dir)
-        
+
+        cmd = [
+            "quarto", "render", "report.ipynb",
+            "--to", "html",
+            "--output", os.path.basename(output_html),
+            # Pass input file paths so the notebook skips auto-discovery
+            "-P", "truvari_input_files:" + " ".join(truvari_stats),
+            "-P", "happy_input_files:" + " ".join(happy_stats),
+        ]
+
         result = subprocess.run(
-            ["quarto", "render", "report.ipynb",
-             "--to", "html",
-             "--output", os.path.basename(output_html),
-             "--execute-dir", workflow_root],
+            cmd,
             capture_output=True,
             text=True
         )
