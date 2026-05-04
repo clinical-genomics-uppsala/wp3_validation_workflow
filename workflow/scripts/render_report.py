@@ -36,6 +36,10 @@ with open(log_file, 'w') as log:
         if isinstance(happy_stats, str):
             happy_stats = [happy_stats]
 
+        # Convert to absolute paths before chdir, so the notebook can find them
+        truvari_stats = [os.path.abspath(f) for f in truvari_stats]
+        happy_stats = [os.path.abspath(f) for f in happy_stats]
+
         # Change to temp directory and render
         # Note: do NOT pass --execute-dir here; Quarto will use temp_dir (the
         # notebook location) as the execution directory, so config/config.yaml
