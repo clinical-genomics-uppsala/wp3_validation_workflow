@@ -18,10 +18,9 @@ snakemake create_validation_data --profile /projects/wp3/Validering/pipelines/wp
 cp validation_results/new_validation_data.tsv /projects/wp3/Validering/pipelines/pipeline_md5sums/nallo_hifi_wgs_md5sums.tsv
 ```
 
-
 ## Validating the results from a new version of a piepline
 
-When updatng to a newer version of a pipeline, or updating the config for a pipeline, has been run on the GIAB validation samples. The the checksums of the results files can be checked against the checksums in the pipeline above using the pipeline. This will also run the hap.py and truvari benchmarking analysis.
+When updatng to a newer version of a pipeline, or updating the config for a pipeline, the validation pipeline can be used to see which files have changed. This will automatically run the hap.py and truvari benchmarking analysis for any HG001 and HG002 samples found in the results.
 
 ```bash
 snakemake  --profile /projects/wp3/Validering/pipelines/wp3_validation_workflow/profiles/slurm  --configfiles /projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config.yaml  /projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config_nallo_hifi_wgs.yaml -s /projects/wp3/Validering/pipelines/wp3_validation_workflow/workflow/Snakefile 
