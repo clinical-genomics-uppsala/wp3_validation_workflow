@@ -1,7 +1,6 @@
 name: Dry-Run Tests
 
 on:
-  push:
   pull_request:
     branches: [ main, develop ]
 

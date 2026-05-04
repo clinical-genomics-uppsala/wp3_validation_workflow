@@ -15,17 +15,9 @@ rule checksum_vcf_gz:
         runtime=get_resource("vcf_validation", "runtime", 30),
         cpus_per_task=get_resource("vcf_validation", "cpus_per_task", 1)
     container:
-        config.get("default_container")
-    shell:
-        """
-        exec 2> {log}
-        md5=$(zcat {input.file} | \
-              awk 'BEGIN{{START_PRINT=0}}{{if(START_PRINT) print($0); if(/^#CHROM/) START_PRINT=1; }}' | \
-              awk '{{if($8 ~/&/) {{split($8, arr, "[&|]"); joined=""; for (i in arr) joined=joined"&"arr[i]; gsub(/^&/, "", joined); $8=joined}}; print($0)}}' | \
-              md5sum | \
-              awk '{{print($1)}}')
-        echo $md5 > {output}
-        """
+        config.get("checksum_vcf_gz", {}).get("container", "")
+    script:
+        "../scripts/compute_vcf_md5.py"
 
 # Validate compressed VCF files using pre-calculated checksums
 rule validate_vcf_gz:
