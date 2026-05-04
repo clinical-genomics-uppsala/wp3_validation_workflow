@@ -19,7 +19,10 @@ with open(log_file, 'w') as log:
     
     try:
         log.write(f"Rendering to temporary location: {temp_dir}\n")
-        
+
+        # Resolve output path before chdir so it stays correct in temp_dir
+        output_html = os.path.abspath(output_html)
+
         # Copy notebook to temp directory
         shutil.copy(notebook, f"{temp_dir}/report.ipynb")
         
