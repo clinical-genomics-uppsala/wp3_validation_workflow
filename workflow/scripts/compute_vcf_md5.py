@@ -14,6 +14,8 @@ otherwise identical VCF files produce the same checksum:
   3. The most_severe_consequence field is normalized by sorting its
      comma-separated entries alphabetically.
   4. INFO keys specified in skip_info_keys are removed before hashing.
+  5. Sample columns (FORMAT + all genotype columns) are optionally removed
+     before hashing when skip_sample_columns is set to true in the config.
 """
 
 import gzip
@@ -104,25 +106,37 @@ def normalize_info(info: str, skip_keys: set[str] | None = None) -> str:
     return ";".join(new_parts)
 
 
-def normalize_line(line: str, skip_keys: set[str] | None = None) -> str:
+def normalize_line(
+    line: str,
+    skip_keys: set[str] | None = None,
+    skip_sample_columns: bool = False,
+) -> str:
     """Normalize the INFO field of a single VCF data line (tab-delimited).
-    
+
     Args:
         line: The VCF data line
         skip_keys: Set of INFO keys to exclude from the output
+        skip_sample_columns: If True, FORMAT and sample columns are dropped
     """
     fields = line.split("\t")
     if len(fields) >= 8:
         fields[7] = normalize_info(fields[7], skip_keys)
+    if skip_sample_columns:
+        fields = fields[:8]
     return "\t".join(fields)
 
 
-def compute_md5(input_file: str, skip_keys: set[str] | None = None) -> tuple[str, int]:
+def compute_md5(
+    input_file: str,
+    skip_keys: set[str] | None = None,
+    skip_sample_columns: bool = False,
+) -> tuple[str, int]:
     """Open a bgzipped VCF, normalize, and return (hex_digest, lines_hashed).
-    
+
     Args:
         input_file: Path to the bgzipped VCF file
         skip_keys: Set of INFO keys to exclude from hashing
+        skip_sample_columns: If True, FORMAT and sample columns are dropped
     """
     md5 = hashlib.md5()
     past_header = False
@@ -135,11 +149,12 @@ def compute_md5(input_file: str, skip_keys: set[str] | None = None) -> tuple[str
             if not past_header:
                 if line.startswith("#CHROM"):
                     past_header = True
-                    md5.update((line + "\n").encode())
+                    hdr = "\t".join(line.split("\t")[:8]) if skip_sample_columns else line
+                    md5.update((hdr + "\n").encode())
                     lines_hashed += 1
                 continue
 
-            normalized = normalize_line(line, skip_keys)
+            normalized = normalize_line(line, skip_keys, skip_sample_columns)
             md5.update((normalized + "\n").encode())
             lines_hashed += 1
 
@@ -158,12 +173,15 @@ def main() -> None:
     # Get skip_info_keys from config if specified
     skip_keys_list = snakemake.config.get("skip_info_keys", [])  # noqa: F821
     skip_keys = set(skip_keys_list) if skip_keys_list else None
-    
+    skip_sample_columns: bool = snakemake.config.get("skip_sample_columns", False)  # noqa: F821
+
     if skip_keys:
         log.info("Skipping INFO keys: %s", ", ".join(sorted(skip_keys)))
+    if skip_sample_columns:
+        log.info("Skipping sample columns (FORMAT + genotype data)")
 
     log.info("Computing MD5 for %s", input_file)
-    checksum, lines_hashed = compute_md5(input_file, skip_keys)
+    checksum, lines_hashed = compute_md5(input_file, skip_keys, skip_sample_columns)
     log.info("Hashed %d lines → %s", lines_hashed, checksum)
 
     with open(output_file, "w") as out:
