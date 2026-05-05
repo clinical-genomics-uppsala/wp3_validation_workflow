@@ -84,17 +84,17 @@ rule run_happy_benchmarking_sample:
         bench_bed=get_happy_truth_bed,
         sdf="benchmark_happy/reference.sdf"
     output:
-        summary=f"{PUBLISH_DIR}/happy_{{sample}}/{{sample}}_happy.out.summary.csv",
-        extended=f"{PUBLISH_DIR}/happy_{{sample}}/{{sample}}_happy.out.extended.csv",
-        metrics=f"{PUBLISH_DIR}/happy_{{sample}}/{{sample}}_happy.out.metrics.json.gz",
-        runinfo=f"{PUBLISH_DIR}/happy_{{sample}}/{{sample}}_happy.out.runinfo.json",
-        vcf=f"{PUBLISH_DIR}/happy_{{sample}}/{{sample}}_happy.out.vcf.gz",
-        vcf_tbi=f"{PUBLISH_DIR}/happy_{{sample}}/{{sample}}_happy.out.vcf.gz.tbi",
-        roc_all=f"{PUBLISH_DIR}/happy_{{sample}}/{{sample}}_happy.out.roc.all.csv.gz",
-        roc_indel=f"{PUBLISH_DIR}/happy_{{sample}}/{{sample}}_happy.out.roc.Locations.INDEL.csv.gz",
-        roc_indel_pass=f"{PUBLISH_DIR}/happy_{{sample}}/{{sample}}_happy.out.roc.Locations.INDEL.PASS.csv.gz",
-        roc_snp=f"{PUBLISH_DIR}/happy_{{sample}}/{{sample}}_happy.out.roc.Locations.SNP.csv.gz",
-        roc_snp_pass=f"{PUBLISH_DIR}/happy_{{sample}}/{{sample}}_happy.out.roc.Locations.SNP.PASS.csv.gz"
+        summary=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.summary.csv",
+        extended=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.extended.csv",
+        metrics=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.metrics.json.gz",
+        runinfo=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.runinfo.json",
+        vcf=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.vcf.gz",
+        vcf_tbi=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.vcf.gz.tbi",
+        roc_all=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.roc.all.csv.gz",
+        roc_indel=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.roc.Locations.INDEL.csv.gz",
+        roc_indel_pass=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.roc.Locations.INDEL.PASS.csv.gz",
+        roc_snp=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.roc.Locations.SNP.csv.gz",
+        roc_snp_pass=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.roc.Locations.SNP.PASS.csv.gz"
     params:
         ref_fasta=config.get("reference_genome", "")
     log:
@@ -108,7 +108,7 @@ rule run_happy_benchmarking_sample:
     shell:
         """
         exec 2> {log}
-        mkdir -p {PUBLISH_DIR}/happy_{wildcards.sample}
+        mkdir -p {HAPPY_RESULTS_DIR}/happy_{wildcards.sample}
 
         export HGREF={params.ref_fasta}
 
@@ -118,7 +118,7 @@ rule run_happy_benchmarking_sample:
           -f {input.bench_bed} \
           --reference {params.ref_fasta} \
           --stratification {input.strat_dir}/GRCh38-all-stratifications.tsv  \
-          -o {PUBLISH_DIR}/happy_{wildcards.sample}/{wildcards.sample}_happy.out \
+          -o {HAPPY_RESULTS_DIR}/happy_{wildcards.sample}/{wildcards.sample}_happy.out \
           --pass-only --engine=vcfeval --threads {resources.cpus_per_task} \
           --engine-vcfeval-template {input.sdf}
         """
