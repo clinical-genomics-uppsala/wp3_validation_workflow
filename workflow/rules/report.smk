@@ -7,7 +7,7 @@ rule render_benchmarking_report:
     output:
         html=f"{PUBLISH_DIR}/variant_benchmarking_report.html"
     log:
-        "logs/render_truvari_comparison_report.log"
+        "logs/render_benchmarking_report.log"
     resources:
         mem_mb=get_resource("summary_tasks", "mem_mb", 2000),
         runtime=get_resource("summary_tasks", "runtime", 10),
