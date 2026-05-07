@@ -88,7 +88,7 @@ Located in `{publish_dir}/`:
 
 ## Running Benchmarking
 
-Benchmarking runs automatically as part of the main workflow when GIAB samples are detected:
+Benchmarking runs automatically as part of the main workflow when GIAB samples are detected. However, if only benchmarking is required it can be run on its own.
 
 ```bash
 # Dry run to see which benchmarking jobs will be triggered
