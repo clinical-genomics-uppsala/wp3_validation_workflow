@@ -76,9 +76,11 @@ HAPPY_SAMPLES = {}
 
 # Determine which truvari benchmarking targets to include based on input files
 truvari_targets = []
-truvari_vcf_suffix = config.get("truvari_vcf_suffix", "svs.vcf.gz")
+truvari_vcf_suffix = config.get("truvari_vcf_suffix", None)
 # Support both single suffix (string) and multiple suffixes (list)
-if isinstance(truvari_vcf_suffix, str):
+if truvari_vcf_suffix is None:
+    truvari_vcf_suffixes = []
+elif isinstance(truvari_vcf_suffix, str):
     truvari_vcf_suffixes = [truvari_vcf_suffix]
 else:
     truvari_vcf_suffixes = truvari_vcf_suffix
