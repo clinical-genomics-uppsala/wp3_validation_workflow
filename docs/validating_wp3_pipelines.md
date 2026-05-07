@@ -1,15 +1,24 @@
 # Running the wp3 validation pipeline
 
+## Create the venv or source if it is already available
+```bash
+cd  /projects/wp3/Validering/pipelines/wp3_validation_workflow/
+python3.11 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
 ## Creating the validation checksum file for the first time
 
-1. Change to the results folder of the pipeline 
+1. Change to the results folder of the pipeline. The pipline results to be vaildated should be stored under the folder for each pipeline at 
 2. Create a tsv file listing all the results files to be checksummed. This file lists the files to be checksummed in the file column and the checksum column can be left blank.
 3. Save this file under /projects/wp3/Validering/pipelines/pipeline_md5sums and add the path to the md5sum file in the pipeline specific config under ```input:```.
 
 Below is an example of creating the checksums for the Nallo wgs pipeline.
 
 ```bash
-snakemake create_validation_data --profile /projects/wp3/Validering/pipelines/wp3_validation_workflow/profiles/slurm  --configfiles /projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config.yaml /projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config_nallo_hifi_wgs.yaml -s /projects/wp3/Validering/pipelines/wp3_validation_workflow/workflow/Snakefile 
+source /projects/wp3/Validering/pipelines/wp3_validation_workflow/venv/bin/activate
+snakemake create_validation_data --profile /projects/wp3/Validering/pipelines/wp3_validation_workflow/profiles/slurm -s /projects/wp3/Validering/pipelines/wp3_validation_workflow/workflow/Snakefile  --configfiles /projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config.yaml /projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config_nallo_hifi_wgs.yaml 
 ```
 
 3. Copy the newly generated checksum tsv file to the pipeline_md5sums folder with the specific name specified in the config for that pipeline (in this example config/config_nallo_hifi_wgs.yaml).
