@@ -14,7 +14,7 @@ keep-going: True
 
 # Singularity configuration
 use-singularity: True
-singularity-args: "--bind $(pwd),/scratch,/beegfs-storage/ "
+singularity-args: "--bind $(pwd),/scratch,/beegfs-storage/,/data,/projects" 
 
 # Default job resources (applied to all jobs unless overridden)
 default-resources:
