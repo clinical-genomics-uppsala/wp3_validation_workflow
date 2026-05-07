@@ -121,9 +121,12 @@ for f in FILES_AND_CHECKSUMS.keys():
                 truvari_targets.append(f"{TRUVARI_RESULTS_DIR}/truvari_{sample}/ga4gh_with_refine.size_stratified.accuracy.stats.csv")
                 break  # Break after first match to avoid duplicate entries
 
-# Add comparison report if there are multiple Truvari samples
-if len(TRUVARI_SAMPLES) >= 1:
-    truvari_targets.append(f"{PUBLISH_DIR}/variant_benchmarking_report.html")
+# Add benchmarking report if any GIAB samples were detected
+benchmarking_report_target = (
+    [f"{PUBLISH_DIR}/variant_benchmarking_report.html"]
+    if len(TRUVARI_SAMPLES) >= 1 or len(HAPPY_SAMPLES) >= 1
+    else []
+)
 
 
 # Target rule. to run the entire workflow including happy benchmarking if relevant files are present
@@ -134,6 +137,7 @@ rule all:
         f"{PUBLISH_DIR}/.workflow_status",
         happy_targets,
         truvari_targets,
+        benchmarking_report_target,
 
 # Collect all validation results
 rule collect_results:
@@ -287,9 +291,9 @@ rule run_truvari_benchmarking:
     input:
         truvari_targets
 
-# Target rule for running only bap.py and truvari benchmarking on giab samples
+# Target rule for running only hap.py and truvari benchmarking on giab samples
 rule run_giab_benchmarking:
     input:
         happy_targets,
         truvari_targets,
-        f"{PUBLISH_DIR}/variant_benchmarking_report.html" if len(TRUVARI_SAMPLES) >= 1 else []
+        benchmarking_report_target,
