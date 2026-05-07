@@ -1,4 +1,4 @@
-input: "pipeline_md5sums/marple_md5sums.tsv"
+input: "/projects/wp3/Validering/pipelines/pipeline_md5sums/marple_md5sums.tsv"
 
 design_bed: "/projects/wp3/nobackup/TwistCancer/Bedfiles/Twist_Cancer_230608_hg38_TE-98982205-wPGRS.merged.bed"
 
