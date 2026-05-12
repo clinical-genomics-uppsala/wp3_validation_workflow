@@ -9,6 +9,7 @@
 Below is an example of creating the checksums for the Nallo wgs pipeline.
 
 ```bash
+source /projects/wp3/Validering/pipelines/wp3_validation_workflow/venv/bin/activate
 snakemake create_validation_data --profile /projects/wp3/Validering/pipelines/wp3_validation_workflow/profiles/slurm  --configfiles /projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config.yaml /projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config_nallo_hifi_wgs.yaml -s /projects/wp3/Validering/pipelines/wp3_validation_workflow/workflow/Snakefile 
 ```
 
