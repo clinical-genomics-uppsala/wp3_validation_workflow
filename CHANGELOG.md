@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/compare/v1.3.0...v1.3.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* awk syntax in metrics_validation.smk ([71f1d12](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/71f1d12b302dd1f8817fd5b53505ad8ede728aa7))
+
 ## [1.3.0](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/compare/v1.2.0...v1.3.0) (2026-05-21)
 
 
