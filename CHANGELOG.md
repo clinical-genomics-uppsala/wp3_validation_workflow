@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.3.0](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/compare/v1.2.0...v1.3.0) (2026-05-21)
+
+
+### Features
+
+* allow the happy rule to use a bed file ([a444dba](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/a444dbaaf91f92d75644407dbbd6692f10ef35a5))
+
+
+### Bug Fixes
+
+* guard all downstream plot cells with truvari_available/happy_available flags ([526ffe1](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/526ffe1f0dd20a0d80721bc4e6bae0aea2dd0a83))
+* handle cases where there truvari will not be run ([36ba5ac](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/36ba5acd7fa44371dd5f410cac19d0e65cf9367e))
+* handle missing values in truvari dataframe ([fb51d7d](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/fb51d7ddf3f5f351aeeb78c340bbc9675b1ad877))
+* only create a benchmark report if truvari or happy results available ([efc51d1](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/efc51d11b9d8a78d11eb1e002802b0ef0a26c5c7))
+* restore cell 6 source from char-array to line-array ([6be0371](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/6be03713e5ee240a8ce4940d0ef65e55ad45fbad))
+* skip plot data and software versions on multiqc report ([a274cb8](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/a274cb8e5ee262f35813ffa192ab023e497973b5))
+
 ## [1.2.0](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/compare/v1.1.0...v1.2.0) (2026-05-05)
 
 
