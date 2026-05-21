@@ -184,7 +184,7 @@ class TruthStats:
 
         def format_metric(m):
             if m is None:
-                return "N/A   ";
+                return "N/A"
             else:
                 return f"{m:.4f}"
             
