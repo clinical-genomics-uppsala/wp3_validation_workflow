@@ -96,7 +96,8 @@ rule run_happy_benchmarking_sample:
         roc_snp=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.roc.Locations.SNP.csv.gz",
         roc_snp_pass=f"{HAPPY_RESULTS_DIR}/happy_{{sample}}/{{sample}}_happy.out.roc.Locations.SNP.PASS.csv.gz"
     params:
-        ref_fasta=config.get("reference_genome", "")
+        ref_fasta=config.get("reference_genome", ""),
+        regions_bed=config.get("design_bed", "")
     log:
         "logs/run_happy_benchmarking_sample/{sample}.log"
     resources:
@@ -112,6 +113,11 @@ rule run_happy_benchmarking_sample:
 
         export HGREF={params.ref_fasta}
 
+        REGIONS_ARG=""
+        if [ -n "{params.regions_bed}" ]; then
+            REGIONS_ARG="-R {params.regions_bed}"
+        fi
+
         /opt/hap.py/bin/hap.py \
           {input.bench_vcf} \
           {input.vcf} \
@@ -120,7 +126,8 @@ rule run_happy_benchmarking_sample:
           --stratification {input.strat_dir}/GRCh38-all-stratifications.tsv  \
           -o {HAPPY_RESULTS_DIR}/happy_{wildcards.sample}/{wildcards.sample}_happy.out \
           --pass-only --engine=vcfeval --threads {resources.cpus_per_task} \
-          --engine-vcfeval-template {input.sdf}
+          --engine-vcfeval-template {input.sdf} \
+          $REGIONS_ARG
         """
 
  

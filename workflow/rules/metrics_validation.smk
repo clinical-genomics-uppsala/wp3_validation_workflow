@@ -81,6 +81,8 @@ rule checksum_multiqc:
               sed 's/generated on [0-9:, -]*//' | \
               sed 's/mqc_analysis_path.*code/mqc_analysis_pathcode/g' | \
               sed 's/able[A-Za-zw_ ]*/able/g' | \
+              sed 's|<script type="text/plain" id="mqc_compressed_plotdata">.*</script>||' | \
+              awk '/id="mqc-module-section-multiqc_software_versions"/{skip=1; next} /<\/table>/{if (skip) {skip=0; next}} {if (!skip) print}' | \
               md5sum | \
               awk '{{print($1)}}')
         
