@@ -1,5 +1,7 @@
 input: "/projects/wp3/Validering/pipelines/pipeline_md5sums/pipeline_md5sums/hastings_md5sums.tsv"
 
+multiqc_skip_version_groups: ["Hastings"]
+
 design_bed: "/data/ref_data/wp3/hastings/hg38_exome_comp_spikein_v2.0.2_targets_sorted.re_annotated.sorted.bed"
 reference_genome: "/beegfs-storage/data/ref_genomes/GRCh38/GRCmasked/GCA_000001405.15_GRCh38_no_alt_analysis_set_GRCmasked.fasta"
 
