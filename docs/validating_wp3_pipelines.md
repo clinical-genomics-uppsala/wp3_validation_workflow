@@ -9,6 +9,7 @@
 Below is an example of creating the checksums for the Nallo wgs pipeline.
 
 ```bash
+source /projects/wp3/Validering/pipelines/wp3_validation_workflow/venv/bin/activate
 snakemake create_validation_data --profile /projects/wp3/Validering/pipelines/wp3_validation_workflow/profiles/slurm  --configfiles /projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config.yaml /projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config_nallo_hifi_wgs.yaml -s /projects/wp3/Validering/pipelines/wp3_validation_workflow/workflow/Snakefile 
 ```
 
@@ -58,13 +59,34 @@ grep -v ^'#' -c *.vcf
 
 In the bcftools isec results folder files 0000.vcf and 0001.vcf list variants private to each vcf. The grep count above should return zero if the variants in each vcf compared are the same.
 
-### Highlighting changes with git
+#### Highlighting changes with git
 
 If the bcftools isec shows zero differences between the vcfs, then you can use git diff to highlight what has changed in the vcf rows to cause the difference in md5 checksum. This is a good way to highlight annotation differences in the info field. For instance, if an additional frequency database was used, that newly added annotation source will be highlighted.
 
 ```bash
 git diff --word-diff --word-diff-regex=.  <(zcat v0.8.1_config_v1.0.4/snvs/family/HM24385/HM24385.hard-filtered.vcf.gz) <(zcat v0.11.0_config_v1.3.0/snvs/family/HM24385/HM24385.hard-filtered.vcf.gz)
 ```
+### Comparing CNV and SV files
 
+Truvari's consistency tool can be a quick means to see the number of variants differing between CNV and SV vcfs from different pipeline versions
+```bash
+truvari consistency v1.0.1_config_v0.16.0/results/NA24385/cnv_sv/NA24385.cnvpytor.vcf.gz v1.1_config_v0.18.0/results/NA24385/cnv_sv/NA24385.cnvpytor.vcf.gz
+#
+# Total 4215 calls across 2 VCFs
+#
+#File	NumCalls
+v1.0.1_config_v0.16.0/results/NA24385/cnv_sv/NA24385.cnvpytor.vcf.gz	4215
+v1.1_config_v0.18.0/results/NA24385/cnv_sv/NA24385.cnvpytor.vcf.gz	4215
+#
+# Summary of consistency
+#
+#VCFs	Calls	Pct
+2	4215	100.00%
+#
+# Breakdown of VCFs' consistency
+#
+#Group	Total	TotalPct	PctOfFileCalls
+11	4215	100.00%	100.00% 100.00% 
+```
 
 
