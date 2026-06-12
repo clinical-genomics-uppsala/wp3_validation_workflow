@@ -9,7 +9,6 @@ Files are processed based on filename patterns:
 | `.vcf.gz` | Compressed VCF validation (normalized MD5) |
 | `.bam`, `.cram` | DNA CRAM validation via `samtools view` |
 | `_metrics.txt`, `.alignment_summary_metrics`, etc. | Metrics file validation (after `## METRICS` marker) |
-| `multiqc_report.html` | MultiQC HTML (timestamp/path normalization) |
 | `*.stats` (samtools) | Samtools stats validation |
 | All other files | Default direct MD5 checksum |
 
