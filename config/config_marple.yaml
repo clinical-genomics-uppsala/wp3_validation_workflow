@@ -1,7 +1,5 @@
 input: "pipeline_md5sums/marple_md5sums.tsv"
 
-multiqc_skip_version_groups: ["Marple"]
-
 design_bed: "/projects/wp3/nobackup/TwistCancer/Bedfiles/Twist_Cancer_230608_hg38_TE-98982205-wPGRS.merged.bed"
 
 happy_vcf_suffix: "hard-filtered.vcf.gz"

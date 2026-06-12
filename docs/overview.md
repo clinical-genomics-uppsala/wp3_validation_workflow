@@ -5,7 +5,6 @@ The pipeline validates various bioinformatics file types by calculating checksum
 - VCF files
 - BAM or CRAM files
 - Metrics files (insert_size_metrics, HsMetrics, alignment_summary_metrics, duplication_metrics etc.)
-- MultiQC HTML reports
 - Samtools stats files
 - Various other file types
 

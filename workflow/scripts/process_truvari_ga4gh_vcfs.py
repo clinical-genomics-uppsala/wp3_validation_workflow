@@ -117,7 +117,7 @@ def get_sv_type(word):
     if svt is not None:
         if svt == b"DEL":
             return SVType.DEL
-        elif svt == b"INS":
+        elif svt == b"INS" or svt.startswith(b"DUP"):
             return SVType.INS
         else:
             return None

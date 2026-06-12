@@ -5,8 +5,7 @@ The pipeline replicates the exact validation logic from the Nextflow workflow:
 1. **VCF files**: Extracts content after `#CHROM` header, sorts INFO field annotations
 2. **BAM files**: Uses `samtools view` to extract alignments
 3. **Metrics files**: Extracts content after the `## METRICS` marker
-4. **MultiQC reports**: Normalizes timestamp and path information
-5. **Other files**: Direct MD5 checksum calculation
+4. **Other files**: Direct MD5 checksum calculation
 
 ## VCF Normalization Details
 
