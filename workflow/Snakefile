@@ -67,7 +67,7 @@ include: "rules/truvari_benchmarking.smk"
 include: "rules/report.smk"
 
 # Rule order to resolve ambiguous rules - prioritize specific rules over general ones
-ruleorder: checksum_vcf_gz > checksum_dna_cram > checksum_metrics > checksum_multiqc > checksum_samtools_stats > checksum_collection_of_files > checksum_default > validate_vcf_gz > validate_dna_cram > validate_metrics > validate_multiqc > validate_samtools_stats > validate_collection_of_files > validate_default
+ruleorder: checksum_vcf_gz > checksum_dna_cram > checksum_metrics > checksum_samtools_stats > checksum_collection_of_files > checksum_default > validate_vcf_gz > validate_dna_cram > validate_metrics > validate_samtools_stats > validate_collection_of_files > validate_default
 
 # Determine which happy benchmarking targets to include based on input files
 happy_targets = []
