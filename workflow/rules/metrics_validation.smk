@@ -58,68 +58,6 @@ rule validate_metrics:
         fi
         """
 
-# Create checksums for MultiQC files (for checksum generation)
-rule checksum_multiqc:
-    input:
-        file=lambda wildcards: [f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file][0]
-    output:
-        "checksums/{file}.checksum"
-    wildcard_constraints:
-        file="multiqc_.*\.html"
-    log:
-        "logs/checksum_multiqc/{file}.log"
-    resources:
-        mem_mb=get_resource("misc_validation", "mem_mb", 4000),
-        runtime=get_resource("misc_validation", "runtime", 20),
-        cpus_per_task=get_resource("misc_validation", "cpus_per_task", 1)
-    container:
-        config.get("default_container")
-    shell:
-        """
-        exec 2> {log}
-        md5=$(cat {input.file} | \
-              sed 's/generated on [0-9:, -]*//' | \
-              sed 's/mqc_analysis_path.*code/mqc_analysis_pathcode/g' | \
-              sed 's/able[A-Za-zw_ ]*/able/g' | \
-              sed 's|<script type="text/plain" id="mqc_compressed_plotdata">.*</script>||' | \
-              awk '/id="mqc-module-section-multiqc_software_versions"/{{skip=1; next}} /<\/table>/{{if (skip) {{skip=0; next}}}} {{if (!skip) print}}' | \
-              md5sum | \
-              awk '{{print($1)}}')
-        
-        echo $md5 > {output}
-        """
-
-# Validate MultiQC HTML files (for validation workflow)
-rule validate_multiqc:
-    input:
-        file=lambda wildcards: [f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file][0],
-        checksum="checksums/{file}.checksum"
-    output:
-        "validation/{file}.validated"
-    params:
-        expected_checksum=lambda wildcards: FILES_AND_CHECKSUMS[[f for f in FILES_AND_CHECKSUMS.keys() if Path(f).name == wildcards.file][0]]
-    wildcard_constraints:
-        file="multiqc_.*\.html"
-    log:
-        "logs/validate_multiqc/{file}.log"
-    resources:
-        mem_mb=get_resource("misc_validation", "mem_mb", 4000),
-        runtime=get_resource("misc_validation", "runtime", 20),
-        cpus_per_task=get_resource("misc_validation", "cpus_per_task", 1)
-    container:
-        config.get("default_container")
-    shell:
-        """
-        exec 2> {log}
-        calculated_md5=$(cat {input.checksum})
-        
-        if [ "$calculated_md5" = "{params.expected_checksum}" ]; then
-            echo "Validated: {wildcards.file}" > {output}
-        else
-            echo "Failed validation: {wildcards.file}: {params.expected_checksum} != $calculated_md5" > {output}
-        fi
-        """
-
 # Create checksums for samtools stats files (for checksum generation)
 rule checksum_samtools_stats:
     input:
