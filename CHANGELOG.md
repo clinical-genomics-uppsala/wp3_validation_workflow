@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/compare/v1.3.1...v1.3.2) (2026-06-12)
+
+
+### Bug Fixes
+
+* add DUPs to the INS count ([81b9b16](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/81b9b16fc28e70160cae6b5bb32fd704ff75aa6e))
+
 ## [1.3.1](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/compare/v1.3.0...v1.3.1) (2026-05-21)
 
 
