@@ -72,7 +72,7 @@ Located in `{publish_dir}/truvari_{sample}_{caller}/`:
 - `ga4gh_with_refine.size_stratified.accuracy.stats.txt`: Size-stratified SV metrics
 - `ga4gh_with_refine.base.vcf.gz`: Benchmark truth set with match annotations
 - `ga4gh_with_refine.comp.vcf.gz`: Query VCF with match annotations
-- Statistics for SV types: DEL, INS stratified by size ranges:
+- Statistics for SV types: DEL, INS (including DUP) stratified by size ranges:
   - [0,50): Small indels
   - [50,500): Medium SVs
   - [500,5000): Large SVs
