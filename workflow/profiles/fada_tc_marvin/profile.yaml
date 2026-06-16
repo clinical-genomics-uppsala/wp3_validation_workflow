@@ -1,0 +1,3 @@
+snakefile: "/projects/wp3/Validering/pipelines/wp3_validation_workflow/workflow/Snakefile"
+configfiles: ["/projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config.yaml", "/projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config_fada_tc.yaml"]
+
