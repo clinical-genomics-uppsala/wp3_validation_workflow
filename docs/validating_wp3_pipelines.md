@@ -6,7 +6,7 @@ VALIDATION_PIPELINE="/projects/wp3/Validering/pipelines/wp3_validation_workflow/
 source ${VALIDATION_PIPELINE}/venv/bin/activate
 ```
 
-These should be run from with the results fodler of the pipeline being validated/benchmarked.
+All commands below should be run from within the results folder of the pipeline being validated/benchmarked.
 
 ## Creating the validation checksum file for the first time
 
@@ -59,8 +59,8 @@ snakemake  --profile ${VALIDATION_PIPELINE}/profiles/slurm --workflow-profile ${
 
 ```
 
-Any differences in the mdsums will cause the pipeline to error, but a ```validation_summary.txt``` file summarisig the failed files will be generated. 
-Look for any expected or unexpected changes. In some cases, like an update to a caller, annotation source or filter, we would expect the md5sum to change in a vcf. In other cases, a change in the pipleline or its configuration may lead to unexpected changes that need to be investigated further.
+Any differences in the md5sums will cause the pipeline to error, but a ```validation_summary.txt``` file summarising the failed files will be generated. 
+Look for any expected or unexpected changes. In some cases, like an update to a caller, annotation source or filter, we would expect the md5sum to change in a vcf. In other cases, a change in the pipeline or its configuration may lead to unexpected changes that need to be investigated further.
 
 ## Changes in pipeline results files
 
@@ -72,12 +72,12 @@ Add the new files to the existing tsv file by appending the file names without m
 ```bash
 vim /projects/wp3/Validering/pipelines/pipeline_md5sums/poirot_md5sums.tsv
 ```
-Then run the create_validation_data worflow:
+Then run the create_validation_data workflow:
 
 ```bash
 snakemake create_validation_data --profile ${VALIDATION_PIPELINE}/profiles/slurm --workflow-profile ${VALIDATION_PIPELINE}/workflow/profiles/poirot_marvin/
 ```
-This generate a file called ```new_validation_data.tsv```under the validation_results folder. This file can compared to the exissting tsv file with diff to see what has changed. Then it be copied to the ```pipeline_md5sums/```folder to update the tsv file:
+This generates a file called ```new_validation_data.tsv``` under the validation_results folder. This file can be compared to the existing tsv file with diff to see what has changed. Then it can be copied to the ```pipeline_md5sums/``` folder to update the tsv file:
 
 ```bash
 diff validation_results/new_validation_data.tsv /projects/wp3/Validering/pipelines/pipeline_md5sums/poirot_md5sums.tsv
