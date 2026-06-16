@@ -60,7 +60,9 @@ snakemake  --profile ${VALIDATION_PIPELINE}/profiles/slurm --workflow-profile ${
 ```
 
 Any differences in the md5sums will cause the pipeline to error, but a ```validation_summary.txt``` file summarising the failed files will be generated. 
-Look for any expected or unexpected changes. In some cases, like an update to a caller, annotation source or filter, we would expect the md5sum to change in a vcf. In other cases, a change in the pipeline or its configuration may lead to unexpected changes that need to be investigated further.
+Look for any expected or unexpected changes. In some cases, like an update to a caller, annotation source or filter, we would expect the md5sum to change in a vcf. In other cases, a change in the pipeline or its configuration may lead to unexpected changes that need to be investigated further. 
+
+Finally, update the md5sum tsv file following the instructions in [Updating the md5sum tsv file](#updating-the-md5sum-tsv-file)
 
 ## Changes in pipeline results files
 
