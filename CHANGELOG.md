@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/compare/v1.3.2...v1.4.0) (2026-06-16)
+
+
+### Features
+
+* add profiles for each wp3 pipeline and improve the docs for wp3 validation ([620635f](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/620635f322e55bc3675edb069d0308408d9e1dce))
+
 ## [1.3.2](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/compare/v1.3.1...v1.3.2) (2026-06-12)
 
 
