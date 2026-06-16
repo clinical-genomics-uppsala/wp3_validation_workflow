@@ -6,6 +6,8 @@ VALIDATION_PIPELINE="/projects/wp3/Validering/pipelines/wp3_validation_workflow/
 source ${VALIDATION_PIPELINE}/venv/bin/activate
 ```
 
+These should be run from with the results fodler of the pipeline being validated/benchmarked.
+
 ## Creating the validation checksum file for the first time
 
 1. Change to the results folder of the pipeline 
@@ -16,7 +18,7 @@ Below is an example of creating the checksums for the Nallo wgs pipeline.
 
 ```bash
 source /projects/wp3/Validering/pipelines/wp3_validation_workflow/venv/bin/activate
-snakemake create_validation_data --profile /projects/wp3/Validering/pipelines/wp3_validation_workflow/profiles/slurm  --configfiles /projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config.yaml /projects/wp3/Validering/pipelines/wp3_validation_workflow/config/config_nallo_hifi_wgs.yaml -s /projects/wp3/Validering/pipelines/wp3_validation_workflow/workflow/Snakefile 
+snakemake create_validation_data --profile ${VALIDATION_PIPELINE}/profiles/slurm --workflow-profile ${VALIDATION_PIPELINE}/workflow/profiles/nallo_hif_wgs_marvin/
 ```
 
 3. Copy the newly generated checksum tsv file to the pipeline_md5sums folder with the specific name specified in the config for that pipeline (in this example config/config_nallo_hifi_wgs.yaml).
@@ -51,7 +53,6 @@ snakemake  --profile ${VALIDATION_PIPELINE}/profiles/slurm --workflow-profile ${
 ```
 
 ### Nallo hifi WGS
-
 
 ```bash
 snakemake  --profile ${VALIDATION_PIPELINE}/profiles/slurm --workflow-profile ${VALIDATION_PIPELINE}/workflow/profiles/nallo_hif_wgs_marvin/
