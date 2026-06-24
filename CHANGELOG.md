@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.4.1](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/compare/v1.4.0...v1.4.1) (2026-06-24)
+
+
+### Bug Fixes
+
+* input path in config_hastings.yaml ([238d88a](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/238d88a697a590a67afa7367cd765fbcdea919c7))
+* Update input path in config_marple.yaml ([c0306fe](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/c0306fee60a1d8b0967e08da573415a7ed3eac85))
+* update singularity binds in the profile ([54b4797](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/commit/54b4797bcd0b1b5b8dcdb77e3bc89b4794b9415b))
+
 ## [1.4.0](https://github.com/clinical-genomics-uppsala/wp3_validation_workflow/compare/v1.3.2...v1.4.0) (2026-06-16)
 
 
